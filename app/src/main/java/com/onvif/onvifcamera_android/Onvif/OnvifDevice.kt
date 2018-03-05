@@ -21,8 +21,13 @@ import java.util.concurrent.TimeUnit
 @JvmField
 var currentDevice = OnvifDevice("", "", "")
 
+interface OnvifUI {
+    fun updateUI(message: String)
+}
+
 class OnvifDevice(IPAdress: String, username: String, password: String) {
 
+    var delegate: OnvifUI? = null
 
     val url = "http://$IPAdress/onvif/device_service"
     @JvmField var username = username
@@ -138,6 +143,7 @@ class OnvifDevice(IPAdress: String, username: String, password: String) {
          */
         override fun onPostExecute(result: Array<String>) {
             Log.d("RESULT", Arrays.toString(result))
+            delegate?.updateUI("YOOOOOO!!")
             // parseOnvifResponses(result)
         }
     }
