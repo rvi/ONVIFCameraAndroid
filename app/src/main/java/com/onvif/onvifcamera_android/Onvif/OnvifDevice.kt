@@ -26,21 +26,16 @@ import java.util.concurrent.TimeUnit
 var currentDevice = OnvifDevice("", "", "")
 
 interface OnvifUI {
-    fun updateUI(message: String)
+    fun requestPerformed(requestType: OnvifRequest.Type, uiMessage: String)
 }
 
 
-enum class OnvifRequest {
-    GetDeviceInformation,
-    GetProfiles,
-    GetStreamURI;
+class OnvifRequest(val xmlCommand: String, val type: Type) {
 
-    fun xmlCommand(): String {
-        when (this) {
-            GetDeviceInformation -> return getDeviceInformationCommand()
-            GetProfiles -> return getProfilesCommand()
-            GetStreamURI -> return getStreamUriCommand()
-        }
+    enum class Type {
+        GetDeviceInformation,
+        GetProfiles,
+        GetStreamURI;
     }
 }
 
@@ -83,11 +78,21 @@ class OnvifDevice(IPAdress: String, @JvmField val username: String, @JvmField va
 
 
     fun getDeviceInformation() {
-        ONVIFcommunication().execute(OnvifRequest.GetDeviceInformation)
+        val request = OnvifRequest(getDeviceInformationCommand(),OnvifRequest.Type.GetDeviceInformation)
+        ONVIFcommunication().execute(request)
     }
 
     fun getProfiles() {
-        ONVIFcommunication().execute(OnvifRequest.GetProfiles)
+        val request = OnvifRequest(getProfilesCommand(),OnvifRequest.Type.GetProfiles)
+        ONVIFcommunication().execute(request)
+    }
+
+    fun getStreamURI() {
+
+        mediaProfiles.lastOrNull()?.let {
+            val request = OnvifRequest(getStreamUriCommand(it), OnvifRequest.Type.GetStreamURI)
+            ONVIFcommunication().execute(request)
+        }
     }
 
     /**
@@ -117,7 +122,7 @@ class OnvifDevice(IPAdress: String, @JvmField val username: String, @JvmField va
             val reqBodyType = MediaType.parse("application/soap+xml; charset=utf-8;")
 
             val reqBody = RequestBody.create(reqBodyType,
-                    getAuthorizationHeader() + onvifRequest.xmlCommand() + getEnvelopeEnd())
+                    getAuthorizationHeader() + onvifRequest.xmlCommand + getEnvelopeEnd())
 
             /* Request to ONVIF device */
             var request: Request? = null
@@ -182,7 +187,7 @@ class OnvifDevice(IPAdress: String, @JvmField val username: String, @JvmField va
             Log.d("RESULT", result.success.toString())
             val uiMessage = parseOnvifResponses(result)
 
-            delegate?.updateUI(uiMessage)
+            delegate?.requestPerformed(result.request.type, uiMessage)
         }
     }
 
@@ -192,19 +197,19 @@ class OnvifDevice(IPAdress: String, @JvmField val username: String, @JvmField va
             parsedResult = "Communication error trying to get " + result.request + ":\n\n" + result.error
 
         } else {
-            if (result.request == OnvifRequest.GetDeviceInformation) {
+            if (result.request.type == OnvifRequest.Type.GetDeviceInformation) {
                 if (parseDeviceInformationResponse(result.result, currentDevice.deviceInformation)) {
                     parsedResult = deviceInformationToString(currentDevice.deviceInformation)
                 }
 
-            } else if (result.request == OnvifRequest.GetProfiles) {
+            } else if (result.request.type == OnvifRequest.Type.GetProfiles) {
                 result.result?.let {
                     val profiles = OnvifMediaProfiles.parseXML(it)
                     currentDevice.mediaProfiles = profiles
                 }
 
-            } else if (result.request == OnvifRequest.GetStreamURI) {
-                Log.d("ff", "baleec")
+            } else if (result.request.type == OnvifRequest.Type.GetStreamURI) {
+                Log.e("RESULT", result.result)
             }
             /*
         else if (result[1].equals("scopes", ignoreCase = true)) {

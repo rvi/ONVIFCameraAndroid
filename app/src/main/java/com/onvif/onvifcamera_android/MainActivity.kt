@@ -5,11 +5,13 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.TextView
 import com.onvif.onvifcamera_android.Onvif.OnvifDevice
+import com.onvif.onvifcamera_android.Onvif.OnvifRequest
 import com.onvif.onvifcamera_android.Onvif.OnvifUI
 import com.onvif.onvifcamera_android.Onvif.currentDevice
 
 
 class MainActivity : AppCompatActivity(), OnvifUI {
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,12 +24,17 @@ class MainActivity : AppCompatActivity(), OnvifUI {
 
        // currentDevice.getDeviceInformation()
         currentDevice.getProfiles()
+       // currentDevice.getStreamURI()
     }
 
-    override fun updateUI(message: String) {
-        Log.d("INFO",message)
+    override fun requestPerformed(requestType: OnvifRequest.Type, uiMessage: String) {
 
-        val textView = findViewById<TextView>(R.id.explanationTextView)
-        textView.text = message
+        Log.d("INFO", uiMessage)
+        if (requestType == OnvifRequest.Type.GetDeviceInformation) {
+            val textView = findViewById<TextView>(R.id.explanationTextView)
+            textView.text = uiMessage
+        } else if (requestType == OnvifRequest.Type.GetProfiles) {
+            currentDevice.getStreamURI()
+        }
     }
 }
