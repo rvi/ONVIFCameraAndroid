@@ -22,7 +22,7 @@ class OnvifMediaProfiles {
             return "<GetProfiles xmlns=\"http://www.onvif.org/ver10/media/wsdl\"/>"
         }
 
-        fun parseXMLBro(toParse: String): List<MediaProfile> {
+        fun parseXML(toParse: String): List<MediaProfile> {
             val results = ArrayList<MediaProfile>()
 
             try {

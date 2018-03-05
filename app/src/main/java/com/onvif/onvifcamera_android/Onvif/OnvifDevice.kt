@@ -1,6 +1,5 @@
 package com.onvif.onvifcamera_android.Onvif
 
-import android.annotation.SuppressLint
 import android.os.AsyncTask
 import android.util.Log
 import com.onvif.onvifcamera_android.Onvif.OnvifDeviceInformation.*
@@ -200,12 +199,9 @@ class OnvifDevice(IPAdress: String, @JvmField val username: String, @JvmField va
 
             } else if (result.request == OnvifRequest.GetProfiles) {
                 result.result?.let {
-                    val profiles = OnvifMediaProfiles.parseXMLBro(it)
+                    val profiles = OnvifMediaProfiles.parseXML(it)
                     currentDevice.mediaProfiles = profiles
                 }
-                //if (parseProfilesResponse(part1Profile, selectedDevice.mediaProfiles[0])) {
-                //parsedResult = profilesToString(selectedDevice.mediaProfiles[0])
-                //}
 
             } else if (result.request == OnvifRequest.GetStreamURI) {
                 Log.d("ff", "baleec")
