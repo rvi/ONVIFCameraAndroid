@@ -18,14 +18,16 @@ class MainActivity : AppCompatActivity(), OnvifUI {
         //currentDevice = OnvifDevice("60.191.94.122:8086","admin", "admin321")
 
         currentDevice = OnvifDevice("60.191.94.122:8086","admin", "admin321")
-        currentDevice.getDeviceInformation()
         currentDevice.delegate = this
+
+       // currentDevice.getDeviceInformation()
+        currentDevice.getProfiles()
     }
 
     override fun updateUI(message: String) {
+        Log.d("INFO",message)
 
         val textView = findViewById<TextView>(R.id.explanationTextView)
         textView.text = message
-        Log.d("INFO",message)
     }
 }
