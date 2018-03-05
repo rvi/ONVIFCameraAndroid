@@ -1,13 +1,16 @@
 package com.onvif.onvifcamera_android.Onvif
 
 import android.os.AsyncTask
-import android.os.Build
+import android.os.Parcel
+import android.os.Parcelable
 import android.util.Log
-import android.view.View
-import android.widget.TextView
+
 import com.onvif.onvifcamera_android.Onvif.OnvifDeviceInformation.getDeviceInformationCommand
 import com.onvif.onvifcamera_android.Onvif.OnvifHeaderBody.getAuthorizationHeader
 import com.onvif.onvifcamera_android.Onvif.OnvifHeaderBody.getEnvelopeEnd
+import com.onvif.onvifcamera_android.Onvif.OnvifMediaProfiles.getProfilesCommand
+import com.onvif.onvifcamera_android.Onvif.OnvifMediaStreamUri.getStreamUriCommand
+
 import okhttp3.*
 import okio.Buffer
 import java.io.IOException
@@ -25,26 +28,61 @@ interface OnvifUI {
     fun updateUI(message: String)
 }
 
+
+enum class OnvifRequest {
+    getDeviceInformation,
+    getProfiles,
+    getStreamingURI;
+
+    fun xmlCommand(): String {
+        when (this) {
+            getDeviceInformation -> return getDeviceInformationCommand()
+            getProfiles -> return getProfilesCommand()
+            getStreamingURI -> return getStreamUriCommand()
+        }
+    }
+}
+
+class OnvifResponse(success: Boolean, message: String) {
+    var success = success
+    private var message = message
+
+    var result: String? = null
+        get() {
+            if (success) return message
+            else return null
+        }
+
+    var error: String? = null
+        get() {
+            if (!success) return message
+            else return null
+        }
+
+}
+
 class OnvifDevice(IPAdress: String, username: String, password: String) {
 
     var delegate: OnvifUI? = null
 
     val url = "http://$IPAdress/onvif/device_service"
-    @JvmField var username = username
-    @JvmField val password = password
+    @JvmField
+    var username = username
+    @JvmField
+    val password = password
 
     var rtspURL = ""
 
 
     fun getDeviceInformation() {
-        ONVIFcommunication().execute(getDeviceInformationCommand(), "devinfo", "")
+
+        ONVIFcommunication().execute(OnvifRequest.getDeviceInformation)
     }
 
-
     /**
-     * Communication in Async Task between Android and Arduino Yun
+     * Communication in Async Task between Android and ONVIF camera
      */
-    private inner class ONVIFcommunication : AsyncTask<String, String, Array<String>>() {
+    private inner class ONVIFcommunication : AsyncTask<OnvifRequest, String, OnvifResponse>() {
 
         /**
          * Background process of communication
@@ -56,23 +94,8 @@ class OnvifDevice(IPAdress: String, username: String, password: String) {
          * @return `String`
          * SOAP XML response from ONVIF device
          */
-        override fun doInBackground(vararg params: String): Array<String> {
-
-            val result = Array(5, { _ -> ""})
-            result[0] = params[0] // Get Onvif request
-            result[1] = params[1] // Get type of request (get, set or movement)
-            if (params.size == 3) {
-                result[2] = params[2] // Display parsed results or not
-            } else {
-                result[2] = ""
-            }
-            result[3] = "ok" // Result of communication attempt, used by onPostExecute
-            result[4] = "" // Error message in case communication failed
-
-
-            /* A HTTP client to access the ONVIF device */
-            // Set timeout to 5 minutes in case we have a lot of data to load
-
+        override fun doInBackground(vararg params: OnvifRequest): OnvifResponse {
+            val onvifRequest = params[0]
 
             val client = OkHttpClient.Builder()
                     .connectTimeout(10000, TimeUnit.SECONDS)
@@ -83,21 +106,24 @@ class OnvifDevice(IPAdress: String, username: String, password: String) {
             val reqBodyType = MediaType.parse("application/soap+xml; charset=utf-8;")
 
             val reqBody = RequestBody.create(reqBodyType,
-                    getAuthorizationHeader() + result[0] + getEnvelopeEnd())
+                    getAuthorizationHeader() + onvifRequest.xmlCommand() + getEnvelopeEnd())
 
             /* Request to ONVIF device */
             var request: Request? = null
             try {
-             //   val credentials = Credentials.basic("operator","Onv!f2018")
+                //   val credentials = Credentials.basic("operator","Onv!f2018")
                 request = Request.Builder()
                         .url(currentDevice.url)
-           //             .addHeader("Authorization", credentials)
+                        //             .addHeader("Authorization", credentials)
                         .addHeader("content-type", "application/soap+xml; charset=UTF-8")
                         .post(reqBody)
                         .build()
             } catch (e: IllegalArgumentException) {
-                result[4] = e.message!!
+                Log.e("ERROR", e.message!!)
+                e.printStackTrace()
             }
+
+            var result = OnvifResponse(false,"not initialized")
 
             if (request != null) {
                 try {
@@ -107,16 +133,16 @@ class OnvifDevice(IPAdress: String, username: String, password: String) {
                     Log.e("RESPONSE", response.toString())
 
                     if (response.code() !== 200) {
-                        result[4] = response.code().toString() + " - " + response.message()
-                        result[3] = "failed"
+
+                        val message = response.code().toString() + " - " + response.message()
+                        result = OnvifResponse(false, message)
                     } else {
-                        result[4] = response.body()!!.string()
+
+                        result = OnvifResponse(true, response.body()!!.string())
                     }
                 } catch (e: IOException) {
-                    result[4] = e.message!!
-                    result[3] = "failed"
+                    result = OnvifResponse(false, e.message!!)
                 }
-
             }
 
             return result
@@ -141,8 +167,8 @@ class OnvifDevice(IPAdress: String, username: String, password: String) {
          * @param result
          * String result of communication
          */
-        override fun onPostExecute(result: Array<String>) {
-            Log.d("RESULT", Arrays.toString(result))
+        override fun onPostExecute(result: OnvifResponse) {
+            Log.d("RESULT", result.success.toString())
             delegate?.updateUI("YOOOOOO!!")
             // parseOnvifResponses(result)
         }
