@@ -11,6 +11,7 @@ import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.Random;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 
@@ -140,7 +141,7 @@ public class OnvifHeaderBody {
     private static String nonce;
 
     public static String getAuthorizationHeader() {
-        nonce = "coucou"; //+ new Random().nextInt();
+        nonce = "" + new Random().nextInt();
         utcTime = getUTCTime();
 
         String envelopePart;
