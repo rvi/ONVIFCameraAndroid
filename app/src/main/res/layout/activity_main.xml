@@ -4,27 +4,68 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:minHeight="23dp"
     tools:context="com.onvif.onvifcamera_android.MainActivity">
 
     <TextView
         android:id="@+id/explanationTextView"
-        android:layout_width="220dp"
-        android:layout_height="206dp"
-        android:text="Hello World!"
+        android:layout_width="272dp"
+        android:layout_height="108dp"
+        android:layout_marginBottom="32dp"
+        android:text="@string/not_connected"
+        android:textAlignment="center"
         app:layout_constraintBottom_toTopOf="@+id/button"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintRight_toRightOf="parent" />
 
     <Button
         android:id="@+id/button"
-        android:layout_width="88dp"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="60dp"
-        android:onClick="openStreamIntent"
-        android:text="Button"
+        android:layout_width="200dp"
+        android:layout_height="55dp"
+        android:layout_marginBottom="80dp"
+        android:onClick="buttonClicked"
+        android:text="@string/Connect"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <EditText
+        android:id="@+id/ipAddress"
+        android:layout_width="269dp"
+        android:layout_height="46dp"
+        android:ems="10"
+        android:hint="@string/ip_address"
+        android:inputType="textUri"
+        app:layout_constraintBottom_toTopOf="@+id/login"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/login"
+        android:layout_width="269dp"
+        android:layout_height="46dp"
+        android:ems="10"
+        android:hint="@string/login"
+        android:inputType="text"
+        app:layout_constraintBottom_toTopOf="@+id/password"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/ipAddress" />
+
+    <EditText
+        android:id="@+id/password"
+        android:layout_width="269dp"
+        android:layout_height="46dp"
+        android:ems="10"
+        android:hint="@string/password"
+        android:inputType="text"
+        app:layout_constraintBottom_toTopOf="@+id/explanationTextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/login" />
 
 </android.support.constraint.ConstraintLayout>

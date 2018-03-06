@@ -51,7 +51,7 @@ package com.onvif.onvifcamera_android.Onvif;
 		parsedResult += "Model: " + parsed.modelName + "\n";
 		parsedResult += "FirmwareVersion: " + parsed.fwVersion + "\n";
 		parsedResult += "SerialNumber: " + parsed.serialNumber + "\n";
-		parsedResult += "HardwareId: " + parsed.hwID + "\n";
+		//parsedResult += "HardwareId: " + parsed.hwID + "\n";
 		return parsedResult;
 	}
 }

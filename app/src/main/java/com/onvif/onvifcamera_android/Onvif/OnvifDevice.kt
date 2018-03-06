@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit
 var currentDevice = OnvifDevice("", "", "")
 
 interface OnvifUI {
-    fun requestPerformed(requestType: OnvifRequest.Type, uiMessage: String)
+    fun requestPerformed(response: OnvifResponse, uiMessage: String)
 }
 
 
@@ -66,11 +66,13 @@ class OnvifResponse(val request: OnvifRequest) {
 
 }
 
-class OnvifDevice(IPAdress: String, @JvmField val username: String, @JvmField val password: String) {
+class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField val password: String) {
 
     var delegate: OnvifUI? = null
+    /// We use this variable to know if the connection has been successful (retrieve device information)
+    var isConnected = false
 
-    val url = "http://$IPAdress/onvif/device_service"
+    val url = "http://$IPAddress/onvif/device_service"
     private val deviceInformation = OnvifDeviceInformation()
 
     var mediaProfiles: List<MediaProfile> = emptyList()
@@ -146,8 +148,8 @@ class OnvifDevice(IPAdress: String, @JvmField val username: String, @JvmField va
                 try {
                     /* Response from ONVIF device */
                     val response = client.newCall(request).execute()
-                    Log.e("BODY", bodyToString(request))
-                    Log.e("RESPONSE", response.toString())
+                    Log.d("BODY", bodyToString(request))
+                    Log.d("RESPONSE", response.toString())
 
                     if (response.code() != 200) {
 
@@ -188,7 +190,7 @@ class OnvifDevice(IPAdress: String, @JvmField val username: String, @JvmField va
             Log.d("RESULT", result.success.toString())
             val uiMessage = parseOnvifResponses(result)
 
-            delegate?.requestPerformed(result.request.type, uiMessage)
+            delegate?.requestPerformed(result, uiMessage)
         }
     }
 
@@ -206,6 +208,7 @@ class OnvifDevice(IPAdress: String, @JvmField val username: String, @JvmField va
 
         } else {
             if (result.request.type == OnvifRequest.Type.GetDeviceInformation) {
+                isConnected = true
                 if (parseDeviceInformationResponse(result.result, currentDevice.deviceInformation)) {
                     parsedResult = deviceInformationToString(currentDevice.deviceInformation)
                 }
