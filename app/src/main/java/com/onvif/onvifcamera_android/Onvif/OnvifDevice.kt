@@ -6,8 +6,9 @@ import com.onvif.onvifcamera_android.Onvif.OnvifDeviceInformation.*
 
 import com.onvif.onvifcamera_android.Onvif.OnvifHeaderBody.getAuthorizationHeader
 import com.onvif.onvifcamera_android.Onvif.OnvifHeaderBody.getEnvelopeEnd
-import com.onvif.onvifcamera_android.Onvif.OnvifMediaStreamUri.getStreamUriCommand
 import com.onvif.onvifcamera_android.Onvif.OnvifMediaProfiles.Companion.getProfilesCommand
+import com.onvif.onvifcamera_android.Onvif.OnvifMediaStreamURI.Companion.getStreamURICommand
+import com.onvif.onvifcamera_android.Onvif.OnvifMediaStreamURI.Companion.parseStreamURIXML
 
 import okhttp3.*
 import okio.Buffer
@@ -74,23 +75,23 @@ class OnvifDevice(IPAdress: String, @JvmField val username: String, @JvmField va
 
     var mediaProfiles: List<MediaProfile> = emptyList()
 
-    var rtspURL = ""
+    var rtspURI : String? = null
 
 
     fun getDeviceInformation() {
-        val request = OnvifRequest(getDeviceInformationCommand(),OnvifRequest.Type.GetDeviceInformation)
+        val request = OnvifRequest(getDeviceInformationCommand(), OnvifRequest.Type.GetDeviceInformation)
         ONVIFcommunication().execute(request)
     }
 
     fun getProfiles() {
-        val request = OnvifRequest(getProfilesCommand(),OnvifRequest.Type.GetProfiles)
+        val request = OnvifRequest(getProfilesCommand(), OnvifRequest.Type.GetProfiles)
         ONVIFcommunication().execute(request)
     }
 
     fun getStreamURI() {
 
         mediaProfiles.lastOrNull()?.let {
-            val request = OnvifRequest(getStreamUriCommand(it), OnvifRequest.Type.GetStreamURI)
+            val request = OnvifRequest(getStreamURICommand(it), OnvifRequest.Type.GetStreamURI)
             ONVIFcommunication().execute(request)
         }
     }
@@ -191,6 +192,13 @@ class OnvifDevice(IPAdress: String, @JvmField val username: String, @JvmField va
         }
     }
 
+    private fun appendCredentials(streamURI: String): String {
+        val protocol = "rtsp://"
+        val startIndex = protocol.length
+        val uri = streamURI.substring(startIndex)
+        return protocol + currentDevice.username + ":" + currentDevice.password + "@" + uri
+    }
+
     private fun parseOnvifResponses(result: OnvifResponse): String {
         var parsedResult = "Parsing failed"
         if (!result.success) {
@@ -206,10 +214,15 @@ class OnvifDevice(IPAdress: String, @JvmField val username: String, @JvmField va
                 result.result?.let {
                     val profiles = OnvifMediaProfiles.parseXML(it)
                     currentDevice.mediaProfiles = profiles
+                    parsedResult = profiles.count().toString() + " profiles retrieved."
                 }
 
             } else if (result.request.type == OnvifRequest.Type.GetStreamURI) {
-                Log.e("RESULT", result.result)
+                result.result?.let {
+                    val streamURI = parseStreamURIXML(it)
+                    currentDevice.rtspURI = appendCredentials(streamURI)
+                    parsedResult = "RTSP URI retrieved."
+                }
             }
             /*
         else if (result[1].equals("scopes", ignoreCase = true)) {

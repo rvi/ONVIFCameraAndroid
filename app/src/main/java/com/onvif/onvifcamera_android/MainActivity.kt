@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.TextView
+import android.widget.Toast
 import com.onvif.onvifcamera_android.Onvif.OnvifDevice
 import com.onvif.onvifcamera_android.Onvif.OnvifRequest
 import com.onvif.onvifcamera_android.Onvif.OnvifUI
@@ -43,13 +44,14 @@ class MainActivity : AppCompatActivity(), OnvifUI {
 
 
     fun openStreamIntent(view: View) {
-        val url = "rtsp://admin:admin321@60.191.94.122:554/cam/realmonitor?channel=1&subtype=1&unicast=true&proto=Onvif"
-        //val url = "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov"
 
-        val intent = Intent(this, StreamActivity::class.java).apply {
-            putExtra(RTSP_URL, url)
+        currentDevice.rtspURI?.let { uri ->
+            val intent = Intent(this, StreamActivity::class.java).apply {
+                putExtra(RTSP_URL, uri)
+            }
+            startActivity(intent)
+        } ?: run {
+            Toast.makeText(this, "RTSP URI haven't been retrieved", Toast.LENGTH_SHORT).show()
         }
-
-        startActivity(intent)
     }
 }
