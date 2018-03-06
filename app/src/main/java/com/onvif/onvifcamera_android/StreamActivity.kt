@@ -25,13 +25,6 @@ class StreamActivity : AppCompatActivity(), VlcListener, View.OnClickListener {
         vlcVideoLibrary = VlcVideoLibrary(this, this, surfaceView)
     }
 
-    override fun onResume() {
-        super.onResume()
-
-        val url = intent.getStringExtra(RTSP_URL)
-      //  vlcVideoLibrary?.play(url)
-    }
-
     override fun onComplete() {
         Toast.makeText(this, "Playing", Toast.LENGTH_SHORT).show()
     }
