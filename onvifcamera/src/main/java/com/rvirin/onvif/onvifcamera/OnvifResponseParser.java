@@ -1,4 +1,4 @@
-package com.onvif.onvifcamera_android.Onvif;
+package com.rvirin.onvif.onvifcamera;
 
 class OnvifResponseParser {
 

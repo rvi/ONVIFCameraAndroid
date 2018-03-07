@@ -1,7 +1,6 @@
-package com.onvif.onvifcamera_android.Onvif;
+package com.rvirin.onvif.onvifcamera;
 
 import android.annotation.SuppressLint;
-import android.util.Base64;
 
 import org.apache.commons.codec.digest.MessageDigestAlgorithms;
 
@@ -16,7 +15,7 @@ import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 
 import static android.util.Base64.*;
-import static com.onvif.onvifcamera_android.Onvif.OnvifDeviceKt.currentDevice;
+import static com.rvirin.onvif.onvifcamera.OnvifDeviceKt.currentDevice;
 
 
 public class OnvifHeaderBody {

@@ -1,19 +1,19 @@
-package com.onvif.onvifcamera_android
+package com.rvirin.onvif.demo
 
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.view.SurfaceView
 import android.view.View
 import android.widget.Button
-import android.widget.EditText
 import android.widget.Toast
 import com.pedro.vlc.VlcListener
 import com.pedro.vlc.VlcVideoLibrary
+import com.rvirin.onvif.R
 
 class StreamActivity : AppCompatActivity(), VlcListener, View.OnClickListener {
 
 
-    var vlcVideoLibrary: VlcVideoLibrary? = null
+    private var vlcVideoLibrary: VlcVideoLibrary? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

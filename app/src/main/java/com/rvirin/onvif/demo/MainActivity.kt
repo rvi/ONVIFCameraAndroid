@@ -1,24 +1,24 @@
-package com.onvif.onvifcamera_android
+package com.rvirin.onvif.demo
 
-import android.annotation.SuppressLint
-import android.annotation.TargetApi
 import android.content.Intent
-import android.os.Build
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.support.annotation.RequiresApi
 import android.util.Log
 import android.view.View
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
-import com.onvif.onvifcamera_android.Onvif.*
+import com.rvirin.onvif.R
 
-import com.onvif.onvifcamera_android.Onvif.OnvifRequest.Type.GetStreamURI
-import com.onvif.onvifcamera_android.Onvif.OnvifRequest.Type.GetProfiles
-import com.onvif.onvifcamera_android.Onvif.OnvifRequest.Type.GetDeviceInformation
+import com.rvirin.onvif.onvifcamera.OnvifRequest.Type.GetStreamURI
+import com.rvirin.onvif.onvifcamera.OnvifRequest.Type.GetProfiles
+import com.rvirin.onvif.onvifcamera.OnvifRequest.Type.GetDeviceInformation
+import com.rvirin.onvif.onvifcamera.OnvifResponse
+import com.rvirin.onvif.onvifcamera.OnvifUI
+import com.rvirin.onvif.onvifcamera.OnvifDevice
+import com.rvirin.onvif.onvifcamera.currentDevice
 
-const val RTSP_URL = "com.onvif.onvifcamera_android.RTSP_URL"
+const val RTSP_URL = "com.rvirin.onvif.onvifcamera.demo.RTSP_URL"
 
 class MainActivity : AppCompatActivity(), OnvifUI {
 
