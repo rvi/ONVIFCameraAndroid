@@ -31,14 +31,13 @@ dependencies {
 
     implementation 'com.squareup.okhttp3:okhttp:3.10.0'
     implementation 'org.eclipse.ecf:org.apache.commons.codec:1.9.0.v20170208-1614'
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
 
-
 ext {
-    bintrayRepo = 'ONVIFCamera' //le nom de votre repo maven créé dans bintray
+    bintrayRepo = 'Maven' //le nom de votre repo maven créé dans bintray
     bintrayName = 'ONVIFCamera' //le nom que vous souhaitez donner à votre projet sur bintray
-    orgName = 'rvirin' //votre nom d'utilisateur
+    orgName = 'rvi' //votre nom d'utilisateur
 
     publishedGroupId = 'com.rvirin.onvif' //aaaa : le nom de groupe de la librarie
     artifact = 'onvifcamera' //BBBB : le nom de la librairie
@@ -54,7 +53,7 @@ ext {
 
     developerId = 'rvi'
     developerName = 'Rémy Virin'
-    developerEmail = 'remy@virin.is'
+    developerEmail = 'remy@virin.us'
 
     licenseName = 'The MIT License'
     licenseUrl = 'https://opensource.org/licenses/MIT'
