@@ -1,4 +1,4 @@
-package com.onvif.onvifcamera_android.Onvif;
+package com.rvirin.onvif.onvifcamera;
 
 /**
  * Created from https://www.onvif.org/ver10/device/wsdl/devicemgmt.wsdl

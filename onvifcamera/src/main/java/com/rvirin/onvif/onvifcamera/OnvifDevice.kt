@@ -1,14 +1,14 @@
-package com.onvif.onvifcamera_android.Onvif
+package com.rvirin.onvif.onvifcamera
 
 import android.os.AsyncTask
 import android.util.Log
-import com.onvif.onvifcamera_android.Onvif.OnvifDeviceInformation.*
+import com.rvirin.onvif.onvifcamera.OnvifDeviceInformation.*
 
-import com.onvif.onvifcamera_android.Onvif.OnvifHeaderBody.getAuthorizationHeader
-import com.onvif.onvifcamera_android.Onvif.OnvifHeaderBody.getEnvelopeEnd
-import com.onvif.onvifcamera_android.Onvif.OnvifMediaProfiles.Companion.getProfilesCommand
-import com.onvif.onvifcamera_android.Onvif.OnvifMediaStreamURI.Companion.getStreamURICommand
-import com.onvif.onvifcamera_android.Onvif.OnvifMediaStreamURI.Companion.parseStreamURIXML
+import com.rvirin.onvif.onvifcamera.OnvifHeaderBody.getAuthorizationHeader
+import com.rvirin.onvif.onvifcamera.OnvifHeaderBody.getEnvelopeEnd
+import com.rvirin.onvif.onvifcamera.OnvifMediaProfiles.Companion.getProfilesCommand
+import com.rvirin.onvif.onvifcamera.OnvifMediaStreamURI.Companion.getStreamURICommand
+import com.rvirin.onvif.onvifcamera.OnvifMediaStreamURI.Companion.parseStreamURIXML
 
 import okhttp3.*
 import okio.Buffer
@@ -23,8 +23,8 @@ import java.util.concurrent.TimeUnit
  * @OnvifResponse: contains the response from the Onvif device
  */
 
-@JvmField
-var currentDevice = OnvifDevice("", "", "")
+
+@JvmField var currentDevice = OnvifDevice("", "", "")
 
 interface OnvifUI {
     fun requestPerformed(response: OnvifResponse, uiMessage: String)

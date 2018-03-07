@@ -1,4 +1,4 @@
-package com.onvif.onvifcamera_android.Onvif
+package com.rvirin.onvif.onvifcamera
 
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException

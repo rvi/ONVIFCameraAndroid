@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:minHeight="23dp"
-    tools:context="com.onvif.onvifcamera_android.MainActivity">
+    tools:context="com.rvirin.onvif.demo.MainActivity">
 
     <TextView
         android:id="@+id/explanationTextView"

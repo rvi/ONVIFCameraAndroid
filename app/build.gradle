@@ -7,7 +7,7 @@ apply plugin: 'kotlin-android-extensions'
 android {
     compileSdkVersion 27
     defaultConfig {
-        applicationId "com.onvif.onvifcamera_android"
+        applicationId 'com.rvirin.onvif.demo'
         minSdkVersion 21
         targetSdkVersion 27
         versionCode 1
@@ -29,14 +29,14 @@ allprojects {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
     implementation 'com.android.support:appcompat-v7:27.1.0'
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
-    implementation 'com.squareup.okhttp3:okhttp:3.10.0'
-    implementation 'org.eclipse.ecf:org.apache.commons.codec:1.9.0.v20170208-1614'
-    implementation 'com.github.pedroSG94.vlc-example-streamplayer:pedrovlc:2.5.14'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
+
+    implementation 'com.github.pedroSG94.vlc-example-streamplayer:pedrovlc:2.5.14'
+    implementation project(':onvifcamera')
 }

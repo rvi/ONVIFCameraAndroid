@@ -1,4 +1,4 @@
-package com.onvif.onvifcamera_android
+package com.rvirin.onvif.demo
 
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
