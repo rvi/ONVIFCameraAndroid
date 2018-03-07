@@ -35,15 +35,13 @@ dependencies {
 }
 
 ext {
-    bintrayRepo = 'Maven' //le nom de votre repo maven créé dans bintray
-    bintrayName = 'ONVIFCamera' //le nom que vous souhaitez donner à votre projet sur bintray
-    orgName = 'rvi' //votre nom d'utilisateur
+    bintrayRepo = 'Maven'
+    bintrayName = 'ONVIFCamera'
+    orgName = 'rvi'
 
-    publishedGroupId = 'com.rvirin.onvif' //aaaa : le nom de groupe de la librarie
-    artifact = 'onvifcamera' //BBBB : le nom de la librairie
-    libraryVersion = "1.0.0" //la version de la librairie
-
-    //la librairie sera donc : aaaa:BBBB:version
+    publishedGroupId = 'com.rvirin.onvif'
+    artifact = 'onvifcamera'
+    libraryVersion = "1.0.0"
 
     libraryName = 'ONVIFCamera'
     libraryDescription = 'Library to ease the connection to a ONVIF Camera'
