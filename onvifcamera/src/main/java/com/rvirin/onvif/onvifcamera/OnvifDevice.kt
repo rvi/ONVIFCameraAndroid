@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit
 
 @JvmField var currentDevice = OnvifDevice("", "", "")
 
-interface OnvifUI {
+interface OnvifListener {
     fun requestPerformed(response: OnvifResponse, uiMessage: String)
 }
 
@@ -68,7 +68,7 @@ class OnvifResponse(val request: OnvifRequest) {
 
 class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField val password: String) {
 
-    var delegate: OnvifUI? = null
+    var listener: OnvifListener? = null
     /// We use this variable to know if the connection has been successful (retrieve device information)
     var isConnected = false
 
@@ -190,7 +190,7 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
             Log.d("RESULT", result.success.toString())
             val uiMessage = parseOnvifResponses(result)
 
-            delegate?.requestPerformed(result, uiMessage)
+            listener?.requestPerformed(result, uiMessage)
         }
     }
 

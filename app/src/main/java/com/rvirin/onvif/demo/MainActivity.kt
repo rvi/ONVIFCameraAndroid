@@ -14,13 +14,13 @@ import com.rvirin.onvif.onvifcamera.OnvifRequest.Type.GetStreamURI
 import com.rvirin.onvif.onvifcamera.OnvifRequest.Type.GetProfiles
 import com.rvirin.onvif.onvifcamera.OnvifRequest.Type.GetDeviceInformation
 import com.rvirin.onvif.onvifcamera.OnvifResponse
-import com.rvirin.onvif.onvifcamera.OnvifUI
+import com.rvirin.onvif.onvifcamera.OnvifListener
 import com.rvirin.onvif.onvifcamera.OnvifDevice
 import com.rvirin.onvif.onvifcamera.currentDevice
 
 const val RTSP_URL = "com.rvirin.onvif.onvifcamera.demo.RTSP_URL"
 
-class MainActivity : AppCompatActivity(), OnvifUI {
+class MainActivity : AppCompatActivity(), OnvifListener {
 
     private var toast: Toast? = null
 
@@ -92,7 +92,7 @@ class MainActivity : AppCompatActivity(), OnvifUI {
                     password.isNotEmpty()) {
 
                 currentDevice = OnvifDevice(ipAddress, login, password)
-                currentDevice.delegate = this
+                currentDevice.listener = this
                 currentDevice.getDeviceInformation()
             } else {
                 toast?.cancel()
