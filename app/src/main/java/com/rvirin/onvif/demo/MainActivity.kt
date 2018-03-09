@@ -27,10 +27,6 @@ class MainActivity : AppCompatActivity(), OnvifListener {
         override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-       // currentDevice = OnvifDevice("60.191.94.122:8086", "admin", "admin321")
-      //  currentDevice.delegate = this
-        //currentDevice.getDeviceInformation()
     }
 
     override fun requestPerformed(response: OnvifResponse, uiMessage: String) {
