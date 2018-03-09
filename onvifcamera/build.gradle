@@ -1,8 +1,5 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
-apply plugin: 'maven-publish'
-
-//apply plugin: 'java-library'
 
 android {
     compileSdkVersion 26
@@ -35,16 +32,6 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:3.10.0'
     implementation 'org.eclipse.ecf:org.apache.commons.codec:1.9.0.v20170208-1614'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-}
-
-publishing.publications.all {
-    pom.withXml {
-        asNode().dependencies.'*'.findAll() {
-            it.scope.text() == 'runtime' && project.configurations.compile.allDependencies.find { dep ->
-                dep.name == it.artifactId.text()
-            }
-        }.each { it.scope*.value = 'compile'}
-    }
 }
 
 ext {
