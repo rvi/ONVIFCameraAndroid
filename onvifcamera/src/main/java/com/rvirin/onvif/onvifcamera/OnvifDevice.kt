@@ -72,7 +72,7 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
     /// We use this variable to know if the connection has been successful (retrieve device information)
     var isConnected = false
 
-    val url = "http://$IPAddress/onvif/device_service"
+    private val url = "http://$IPAddress/onvif/device_service"
     private val deviceInformation = OnvifDeviceInformation()
 
     var mediaProfiles: List<MediaProfile> = emptyList()
@@ -96,6 +96,11 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
             val request = OnvifRequest(getStreamURICommand(it), OnvifRequest.Type.GetStreamURI)
             ONVIFcommunication().execute(request)
         }
+    }
+
+    fun getStreamURI(profile: MediaProfile) {
+            val request = OnvifRequest(getStreamURICommand(profile), OnvifRequest.Type.GetStreamURI)
+            ONVIFcommunication().execute(request)
     }
 
     /**
