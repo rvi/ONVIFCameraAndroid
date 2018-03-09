@@ -27,55 +27,41 @@ public class OnvifHeaderBody {
         nonce = "" + new Random().nextInt();
         utcTime = getUTCTime();
 
+
         String envelopePart;
         String authorizationPart = "";
-        envelopePart = "<SOAP-ENV:Envelope " +
-                "xmlns:SOAP-ENV=\"http://www.w3.org/2003/05/soap-envelope\" " +
-                "xmlns:SOAP-ENC=\"http://www.w3.org/2003/05/soap-encoding\" " +
-                "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
+
+        envelopePart = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
+                "<soap:Envelope " +
+               "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
                 "xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" " +
-                "xmlns:wsa=\"http://schemas.xmlsoap.org/ws/2004/08/addressing\" " +
-                "xmlns:wsdd=\"http://schemas.xmlsoap.org/ws/2005/04/discovery\" " +
-                "xmlns:chan=\"http://schemas.microsoft.com/ws/2005/02/duplex\" " +
-                "xmlns:wsa5=\"http://www.w3.org/2005/08/addressing\" " +
-                "xmlns:xmime=\"http://tempuri.org/xmime.xsd\" " +
-                "xmlns:xop=\"http://www.w3.org/2004/08/xop/include\" " +
-                "xmlns:tt=\"http://www.onvif.org/ver10/schema\" " +
-                "xmlns:wsrfbf=\"http://docs.oasis-open.org/wsrf/bf-2\" " +
-                "xmlns:wstop=\"http://docs.oasis-open.org/wsn/t-1\" " +
-                "xmlns:wsrfr=\"http://docs.oasis-open.org/wsrf/r-2\" " +
-                "xmlns:tdn=\"http://www.onvif.org/ver10/network/wsdl\" " +
-                "xmlns:tds=\"http://www.onvif.org/ver10/device/wsdl\" " +
-                "xmlns:tev=\"http://www.onvif.org/ver10/events/wsdl\" " +
-                "xmlns:wsnt=\"http://docs.oasis-open.org/wsn/b-2\" " +
-                "xmlns:tptz=\"http://www.onvif.org/ver20/ptz/wsdl\" " +
-                "xmlns:trt=\"http://www.onvif.org/ver10/media/wsdl\">";
+                "xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\" >";
         if (!currentDevice.username.equalsIgnoreCase("")) {
-            authorizationPart = "<SOAP-ENV:Header>" +
-                    "<Security SOAP-ENV:mustUnderstand=\"true\">" +
-                    "<UsernameToken>" +
-                    "<Username>" +
+            authorizationPart = "<soap:Header>" +
+                    "<wsse:Security xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\">" +
+                    "<wsse:UsernameToken xmlns:wsu=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd\">" +
+                    "<wsse:Username>" +
                     currentDevice.username +
-                    "</Username>" +
-                    "<Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest\">" +
+                    "</wsse:Username>" +
+                    "<wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest\">" +
                     encryptPassword(currentDevice.password) +
-                    "</Password>" +
-                    "<Nonce>" +
+                    "</wsse:Password>" +
+                    "<wsse:Nonce EncodingType=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary\">" +
                     toBase64(nonce) +
-                    "</Nonce>" +
-                    "<Created>" +
+                    "</wsse:Nonce>" +
+                    "<wsu:Created>" +
                     utcTime +
-                    "</Created>" +
-                    "</UsernameToken>" +
-                    "</Security>" +
-                    "</SOAP-ENV:Header>";
+                    "</wsu:Created>" +
+                    "</wsse:UsernameToken>" +
+                    "</wsse:Security>" +
+                    "</soap:Header>";
         }
-        return envelopePart + authorizationPart + "<SOAP-ENV:Body>";
+        return envelopePart + authorizationPart + "<soap:Body>";
     }
 
     @SuppressWarnings("SameReturnValue")
     public static String getEnvelopeEnd() {
-        return "</SOAP-ENV:Body></SOAP-ENV:Envelope>";
+        return "</soap:Body></soap:Envelope>";
     }
 
     private static String encryptPassword(String password) {
@@ -91,7 +77,6 @@ public class OnvifHeaderBody {
             e.printStackTrace();
             return null;
         }
-        //String encodedString = new String(org.apache.mina.util.Base64.encodeBase64(encryptedRaw));
         String encodedString = toBase64(encryptedRaw);
         encodedString= encodedString.replace("\n","");
         return encodedString;

@@ -92,7 +92,7 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
 
     fun getStreamURI() {
 
-        mediaProfiles.lastOrNull()?.let {
+        mediaProfiles.firstOrNull()?.let {
             val request = OnvifRequest(getStreamURICommand(it), OnvifRequest.Type.GetStreamURI)
             ONVIFcommunication().execute(request)
         }
@@ -133,8 +133,7 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
                 //   val credentials = Credentials.basic("operator","Onv!f2018")
                 request = Request.Builder()
                         .url(currentDevice.url)
-                        //             .addHeader("Authorization", credentials)
-                        .addHeader("content-type", "application/soap+xml; charset=UTF-8")
+                        .addHeader("Content-Type","text/xml; charset=utf-8")
                         .post(reqBody)
                         .build()
             } catch (e: IllegalArgumentException) {
@@ -152,8 +151,8 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
                     Log.d("RESPONSE", response.toString())
 
                     if (response.code() != 200) {
-
-                        val message = response.code().toString() + " - " + response.message()
+                        val responseBody = response.body()!!.string()
+                        val message = response.code().toString() + " - " + response.message() + "\n" + responseBody
                         result.updateResponse(false, message)
                     } else {
 
@@ -177,7 +176,6 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
             } catch (e: IOException) {
                 return "did not work"
             }
-
         }
 
         /**

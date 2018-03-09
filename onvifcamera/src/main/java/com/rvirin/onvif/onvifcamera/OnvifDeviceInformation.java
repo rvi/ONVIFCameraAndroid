@@ -28,7 +28,8 @@ package com.rvirin.onvif.onvifcamera;
 
 	@SuppressWarnings("SameReturnValue")
 	public static String getDeviceInformationCommand() {
-		return "<GetDeviceInformation xmlns=\"http://www.onvif.org/ver10/device/wsdl\"/>";
+		return "<GetDeviceInformation xmlns=\"http://www.onvif.org/ver10/device/wsdl\">" +
+				"</GetDeviceInformation>";
 	}
 
 	public static boolean parseDeviceInformationResponse(String response, OnvifDeviceInformation parsed) {
