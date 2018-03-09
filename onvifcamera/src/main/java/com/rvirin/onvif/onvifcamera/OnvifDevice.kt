@@ -10,8 +10,8 @@ import com.rvirin.onvif.onvifcamera.OnvifMediaStreamURI.Companion.parseStreamURI
 import com.rvirin.onvif.onvifcamera.OnvifDeviceInformation.Companion.deviceInformationCommand
 import com.rvirin.onvif.onvifcamera.OnvifDeviceInformation.Companion.deviceInformationToString
 import com.rvirin.onvif.onvifcamera.OnvifDeviceInformation.Companion.parseDeviceInformationResponse
-import com.rvirin.onvif.onvifcamera.OnvifHeaderBody.authorizationHeader
-import com.rvirin.onvif.onvifcamera.OnvifHeaderBody.envelopeEnd
+import com.rvirin.onvif.onvifcamera.OnvifXMLBuilder.authorizationHeader
+import com.rvirin.onvif.onvifcamera.OnvifXMLBuilder.envelopeEnd
 
 import okhttp3.*
 import okio.Buffer

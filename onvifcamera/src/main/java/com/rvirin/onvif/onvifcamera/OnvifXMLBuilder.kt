@@ -13,7 +13,7 @@ import java.util.*
 /**
  * Created by remy on 09/03/2018.
  */
-object OnvifHeaderBody {
+object OnvifXMLBuilder {
 
     private val  utcTime = getUTCTime()
     private val nonce = "" + Random().nextInt()
