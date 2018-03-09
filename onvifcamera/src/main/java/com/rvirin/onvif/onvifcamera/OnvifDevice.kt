@@ -2,13 +2,16 @@ package com.rvirin.onvif.onvifcamera
 
 import android.os.AsyncTask
 import android.util.Log
-import com.rvirin.onvif.onvifcamera.OnvifDeviceInformation.*
 
-import com.rvirin.onvif.onvifcamera.OnvifHeaderBody.getAuthorizationHeader
-import com.rvirin.onvif.onvifcamera.OnvifHeaderBody.getEnvelopeEnd
+
 import com.rvirin.onvif.onvifcamera.OnvifMediaProfiles.Companion.getProfilesCommand
 import com.rvirin.onvif.onvifcamera.OnvifMediaStreamURI.Companion.getStreamURICommand
 import com.rvirin.onvif.onvifcamera.OnvifMediaStreamURI.Companion.parseStreamURIXML
+import com.rvirin.onvif.onvifcamera.OnvifDeviceInformation.Companion.deviceInformationCommand
+import com.rvirin.onvif.onvifcamera.OnvifDeviceInformation.Companion.deviceInformationToString
+import com.rvirin.onvif.onvifcamera.OnvifDeviceInformation.Companion.parseDeviceInformationResponse
+import com.rvirin.onvif.onvifcamera.OnvifHeaderBody.authorizationHeader
+import com.rvirin.onvif.onvifcamera.OnvifHeaderBody.envelopeEnd
 
 import okhttp3.*
 import okio.Buffer
@@ -82,7 +85,7 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
 
 
     fun getDeviceInformation() {
-        val request = OnvifRequest(getDeviceInformationCommand(), OnvifRequest.Type.GetDeviceInformation)
+        val request = OnvifRequest(deviceInformationCommand, OnvifRequest.Type.GetDeviceInformation)
         ONVIFcommunication().execute(request)
     }
 
@@ -131,7 +134,7 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
             val reqBodyType = MediaType.parse("application/soap+xml; charset=utf-8;")
 
             val reqBody = RequestBody.create(reqBodyType,
-                    getAuthorizationHeader() + onvifRequest.xmlCommand + getEnvelopeEnd())
+                    authorizationHeader + onvifRequest.xmlCommand + envelopeEnd)
 
             /* Request to ONVIF device */
             var request: Request? = null
@@ -213,7 +216,7 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
         } else {
             if (result.request.type == OnvifRequest.Type.GetDeviceInformation) {
                 isConnected = true
-                if (parseDeviceInformationResponse(result.result, currentDevice.deviceInformation)) {
+                if (parseDeviceInformationResponse(result.result!!, currentDevice.deviceInformation)) {
                     parsedResult = deviceInformationToString(currentDevice.deviceInformation)
                 }
 
