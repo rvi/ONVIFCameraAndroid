@@ -54,7 +54,7 @@ ext {
 
     publishedGroupId = 'com.rvirin.onvif'
     artifact = 'onvifcamera'
-    libraryVersion = "1.1.3"
+    libraryVersion = "1.1.4"
 
     libraryName = 'ONVIFCamera'
     libraryDescription = 'Library to ease the connection to a ONVIF Camera'
