@@ -26,7 +26,7 @@ class StreamActivity : AppCompatActivity(), VlcListener, View.OnClickListener {
     }
 
     override fun onComplete() {
-        Toast.makeText(this, "Playing", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Loading video...", Toast.LENGTH_SHORT).show()
     }
 
     override fun onError() {

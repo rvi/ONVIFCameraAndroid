@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit
 @JvmField var currentDevice = OnvifDevice("", "", "")
 
 interface OnvifListener {
-    fun requestPerformed(response: OnvifResponse, uiMessage: String)
+    fun requestPerformed(response: OnvifResponse)
 }
 
 
@@ -46,6 +46,7 @@ class OnvifResponse(val request: OnvifRequest) {
         private set
 
     private var message = ""
+    var parsingUIMessage = ""
 
     fun updateResponse(success: Boolean, message: String) {
         this.success = success
@@ -106,7 +107,7 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
     /**
      * Communication in Async Task between Android and ONVIF camera
      */
-    private inner class ONVIFcommunication : AsyncTask<OnvifRequest, String, OnvifResponse>() {
+    private inner class ONVIFcommunication : AsyncTask<OnvifRequest, Void, OnvifResponse>() {
 
         /**
          * Background process of communication
@@ -160,8 +161,9 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
                         val message = response.code().toString() + " - " + response.message() + "\n" + responseBody
                         result.updateResponse(false, message)
                     } else {
-
                         result.updateResponse(true, response.body()!!.string())
+                        val uiMessage = parseOnvifResponses(result)
+                        result.parsingUIMessage = uiMessage
                     }
                 } catch (e: IOException) {
                     result.updateResponse(false, e.message!!)
@@ -191,9 +193,8 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
          */
         override fun onPostExecute(result: OnvifResponse) {
             Log.d("RESULT", result.success.toString())
-            val uiMessage = parseOnvifResponses(result)
 
-            listener?.requestPerformed(result, uiMessage)
+            listener?.requestPerformed(result)
         }
     }
 

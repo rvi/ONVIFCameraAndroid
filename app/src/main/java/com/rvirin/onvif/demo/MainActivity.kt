@@ -24,14 +24,14 @@ class MainActivity : AppCompatActivity(), OnvifListener {
 
     private var toast: Toast? = null
 
-        override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
     }
 
-    override fun requestPerformed(response: OnvifResponse, uiMessage: String) {
+    override fun requestPerformed(response: OnvifResponse) {
 
-        Log.d("INFO", uiMessage)
+        Log.d("INFO", response.parsingUIMessage)
 
         toast?.cancel()
 
@@ -42,7 +42,7 @@ class MainActivity : AppCompatActivity(), OnvifListener {
         } else if (response.request.type == GetDeviceInformation) {
 
             val textView = findViewById<TextView>(R.id.explanationTextView)
-            textView.text = uiMessage
+            textView.text = response.parsingUIMessage
             toast = Toast.makeText(this, "Device information retrieved 👍", Toast.LENGTH_SHORT)
             toast?.show()
 
