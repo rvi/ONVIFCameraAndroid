@@ -32,6 +32,7 @@ class MainActivity : AppCompatActivity(), OnvifListener {
         currentDevice.getDeviceInformation()
     }
 
+// Called by the SDK each time a request is performed on the camera, when the result is parsed
 override fun requestPerformed(response: OnvifResponse) {
         Log.d("ONVIF", "Request ${response.request.type} performed.")
         Log.d("ONVIF","Succeeded: ${response.success}, 
