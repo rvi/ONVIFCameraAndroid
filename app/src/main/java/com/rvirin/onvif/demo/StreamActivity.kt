@@ -10,6 +10,9 @@ import com.pedro.vlc.VlcListener
 import com.pedro.vlc.VlcVideoLibrary
 import com.rvirin.onvif.R
 
+/**
+ * This activity helps us to show the live stream of an ONVIF camera thanks to VLC library.
+ */
 class StreamActivity : AppCompatActivity(), VlcListener, View.OnClickListener {
 
 
@@ -25,10 +28,16 @@ class StreamActivity : AppCompatActivity(), VlcListener, View.OnClickListener {
         vlcVideoLibrary = VlcVideoLibrary(this, this, surfaceView)
     }
 
+    /**
+     * Called by VLC library when the video is loading
+     */
     override fun onComplete() {
         Toast.makeText(this, "Loading video...", Toast.LENGTH_LONG).show()
     }
 
+    /**
+     * Called by VLC library when an error occured (most of the time, a problem in the URI)
+     */
     override fun onError() {
         Toast.makeText(this, "Error, make sure your endpoint is correct", Toast.LENGTH_SHORT).show()
         vlcVideoLibrary?.stop()

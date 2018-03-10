@@ -18,6 +18,9 @@ object OnvifXMLBuilder {
     private val  utcTime = getUTCTime()
     private val nonce = "" + Random().nextInt()
 
+    /**
+     * The header for SOAP 1.2 with digest authentication
+     */
     val authorizationHeader: String
         get() {
 
@@ -55,6 +58,9 @@ object OnvifXMLBuilder {
     val envelopeEnd: String
         get() = "</soap:Body></soap:Envelope>"
 
+    /**
+     * Method to encrypt the password for Digest authentication
+     */
     private fun encryptPassword(password: String): String? {
         val beforeEncryption = nonce + utcTime + password
         val encryptedRaw: ByteArray

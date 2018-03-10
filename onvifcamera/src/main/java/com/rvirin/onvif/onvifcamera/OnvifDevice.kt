@@ -18,22 +18,21 @@ import okio.Buffer
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-/**
- * Created by Remy Virin on 04/03/2018.
- * This class represent an ONVIF device and contains the methods to interact with it
- * (getDeviceInformation, getProfiles and getStreamURI).
- * @OnvifRequest: helps us to build the request
- * @OnvifResponse: contains the response from the Onvif device
- */
-
-
 @JvmField var currentDevice = OnvifDevice("", "", "")
 
 interface OnvifListener {
+    /**
+     * Called by OnvifDevice each time a request have been retrieved and parsed.
+     * @param response The result of the request also containing the request
+     */
     fun requestPerformed(response: OnvifResponse)
 }
 
-
+/**
+ * Contains a request for an OnvifDevice
+ * @param xmlCommand the xml string to send in the body of the request
+ * @param type The type of the request
+ */
 class OnvifRequest(val xmlCommand: String, val type: Type) {
 
     enum class Type {
@@ -43,6 +42,13 @@ class OnvifRequest(val xmlCommand: String, val type: Type) {
     }
 }
 
+/**
+ * Contains the response from the Onvif device
+ * @param success if the request have been successful
+ * @param parsingUIMessage message to be displayed to the user
+ * @param result The xml string if the request have been successful
+ * @param error The xml string if the request have not been successful
+ */
 class OnvifResponse(val request: OnvifRequest) {
 
     var success = false
@@ -70,6 +76,14 @@ class OnvifResponse(val request: OnvifRequest) {
 
 }
 
+/**
+ * @author Remy Virin on 04/03/2018.
+ * This class represent an ONVIF device and contains the methods to interact with it
+ * (getDeviceInformation, getProfiles and getStreamURI).
+ * @param IPAddress The IP address of the camera
+ * @param username the username to login on the camera
+ * @param password the password to login on the camera
+ */
 class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField val password: String) {
 
     var listener: OnvifListener? = null
@@ -115,12 +129,8 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
         /**
          * Background process of communication
          *
-         * @param params
-         * params[0] = soapRequest as string
-         * params[1] = type of request (get, set or movement)
-         * params[2] = flag for initialization requests
-         * @return `String`
-         * SOAP XML response from ONVIF device
+         * @param params The Onvif Request to execute
+         * @return `OnvifResponse`
          */
         override fun doInBackground(vararg params: OnvifRequest): OnvifResponse {
             val onvifRequest = params[0]
@@ -139,7 +149,6 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
             /* Request to ONVIF device */
             var request: Request? = null
             try {
-                //   val credentials = Credentials.basic("operator","Onv!f2018")
                 request = Request.Builder()
                         .url(currentDevice.url)
                         .addHeader("Content-Type","text/xml; charset=utf-8")
@@ -176,6 +185,9 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
             return result
         }
 
+        /**
+         * Util function to log the body of a `Request`
+         */
         private fun bodyToString(request: Request): String {
 
             try {
@@ -191,8 +203,7 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
         /**
          * Called when AsyncTask background process is finished
          *
-         * @param result
-         * String result of communication
+         * @param result the `OnvifResponse`
          */
         override fun onPostExecute(result: OnvifResponse) {
             Log.d("RESULT", result.success.toString())
@@ -201,6 +212,11 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
         }
     }
 
+    /**
+     * Util method to append the credentials to the rtsp URI
+     * @param streamURI the URI to modify
+     * @return the rtsp URI with the credentials
+     */
     private fun appendCredentials(streamURI: String): String {
         val protocol = "rtsp://"
         val startIndex = protocol.length
@@ -208,6 +224,10 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
         return protocol + currentDevice.username + ":" + currentDevice.password + "@" + uri
     }
 
+    /**
+     * Parsing method for the SOAP XML response
+     * @param result `OnvifResponse` to parse
+     */
     private fun parseOnvifResponses(result: OnvifResponse): String {
         var parsedResult = "Parsing failed"
         if (!result.success) {

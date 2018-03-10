@@ -20,6 +20,10 @@ import com.rvirin.onvif.onvifcamera.currentDevice
 
 const val RTSP_URL = "com.rvirin.onvif.onvifcamera.demo.RTSP_URL"
 
+/**
+ * Main activity of this demo project. It allows the user to type his camera IP address,
+ * login and password.
+ */
 class MainActivity : AppCompatActivity(), OnvifListener {
 
     private var toast: Toast? = null
@@ -39,7 +43,9 @@ class MainActivity : AppCompatActivity(), OnvifListener {
             Log.e("ERROR", "request failed: ${response.request.type} \n Response: ${response.error}")
             toast = Toast.makeText(this, "⛔️ Request failed: ${response.request.type}", Toast.LENGTH_SHORT)
             toast?.show()
-        } else if (response.request.type == GetDeviceInformation) {
+        }
+        // if GetDeviceInformation have been completed, we request the profiles
+        else if (response.request.type == GetDeviceInformation) {
 
             val textView = findViewById<TextView>(R.id.explanationTextView)
             textView.text = response.parsingUIMessage
@@ -48,14 +54,18 @@ class MainActivity : AppCompatActivity(), OnvifListener {
 
             currentDevice.getProfiles()
 
-        } else if (response.request.type == GetProfiles) {
+        }
+        // if GetProfiles have been completed, we request the Stream URI
+        else if (response.request.type == GetProfiles) {
             val profilesCount = currentDevice.mediaProfiles.count()
             toast = Toast.makeText(this, "$profilesCount profiles retrieved 😎", Toast.LENGTH_SHORT)
             toast?.show()
 
             currentDevice.getStreamURI()
 
-        } else if (response.request.type == GetStreamURI) {
+        }
+        // if GetStreamURI have been completed, we're ready to play the video
+        else if (response.request.type == GetStreamURI) {
 
             val button = findViewById<TextView>(R.id.button)
             button.text = getString(R.string.Play)
@@ -67,6 +77,8 @@ class MainActivity : AppCompatActivity(), OnvifListener {
 
     fun buttonClicked(view: View) {
 
+        // If we were able to retrieve information from the camera, and if we have a rtsp uri,
+        // We open StreamActivity and pass the rtsp URI
         if (currentDevice.isConnected) {
             currentDevice.rtspURI?.let { uri ->
                 val intent = Intent(this, StreamActivity::class.java).apply {
@@ -78,7 +90,7 @@ class MainActivity : AppCompatActivity(), OnvifListener {
             }
         } else {
 
-            // get the information type by the user and create the Onvif device
+            // get the information type by the user to create the Onvif device
             val ipAddress = (findViewById<EditText>(R.id.ipAddress)).text.toString()
             val login = (findViewById<EditText>(R.id.login)).text.toString()
             val password = (findViewById<EditText>(R.id.password)).text.toString()
@@ -87,9 +99,11 @@ class MainActivity : AppCompatActivity(), OnvifListener {
                     login.isNotEmpty() &&
                     password.isNotEmpty()) {
 
+                // Create ONVIF device with user inputs and retrieve camera informations
                 currentDevice = OnvifDevice(ipAddress, login, password)
                 currentDevice.listener = this
                 currentDevice.getDeviceInformation()
+
             } else {
                 toast?.cancel()
                 toast = Toast.makeText(this,
