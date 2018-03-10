@@ -21,9 +21,16 @@ currentDevice.getDeviceInformation()
 ## Retrieve the stream URI
 
 ```kotlin
-currentDevice = OnvifDevice("IP_ADDRESS:PORT", "login", "pwd")
-currentDevice.listener = this
-currentDevice.getDeviceInformation()
+class MainActivity : AppCompatActivity(), OnvifListener {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        currentDevice = OnvifDevice("IP_ADDRESS:PORT", "login", "pwd")
+        currentDevice.listener = this
+        currentDevice.getDeviceInformation()
+    }
 
 override fun requestPerformed(response: OnvifResponse) {
         Log.d("ONVIF", "Request ${response.request.type} performed.")
