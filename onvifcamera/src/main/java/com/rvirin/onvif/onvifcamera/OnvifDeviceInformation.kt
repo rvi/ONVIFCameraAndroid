@@ -1,4 +1,11 @@
 package com.rvirin.onvif.onvifcamera
+
+import org.xmlpull.v1.XmlPullParser
+import org.xmlpull.v1.XmlPullParserException
+import org.xmlpull.v1.XmlPullParserFactory
+import java.io.IOException
+import java.io.StringReader
+
 /**
  * Created from https://www.onvif.org/ver10/device/wsdl/devicemgmt.wsdl
  *
@@ -32,18 +39,43 @@ class OnvifDeviceInformation {
                 "<GetDeviceInformation xmlns=\"http://www.onvif.org/ver10/device/wsdl\">" + "</GetDeviceInformation>"
 
         fun parseDeviceInformationResponse(response: String, parsed: OnvifDeviceInformation): Boolean {
+
             try {
-                OnvifResponseParser.lastIndex = 0 // Start from beginning of response
-                parsed.manufacturerName = OnvifResponseParser.parseOnvifString("facturer>", "</tds", response)
-                parsed.modelName = OnvifResponseParser.parseOnvifString("Model>", "</tds", response)
-                parsed.fwVersion = OnvifResponseParser.parseOnvifString("Version>", "</tds", response)
-                parsed.serialNumber = OnvifResponseParser.parseOnvifString("Number>", "</tds", response)
-                parsed.hwID = OnvifResponseParser.parseOnvifString("reId>", "</tds", response)
-                return true
-            } catch (ignore: StringIndexOutOfBoundsException) {
+                val factory = XmlPullParserFactory.newInstance()
+                factory.isNamespaceAware = true
+                val xpp = factory.newPullParser()
+                xpp.setInput(StringReader(response))
+                var eventType = xpp.eventType
+                while (eventType != XmlPullParser.END_DOCUMENT) {
+
+                    if (eventType == XmlPullParser.START_TAG && xpp.name == "Manufacturer") {
+                        xpp.next()
+                        parsed.manufacturerName = xpp.text
+                    } else if (eventType == XmlPullParser.START_TAG && xpp.name == "Model") {
+                        xpp.next()
+                        parsed.modelName = xpp.text
+                    } else if (eventType == XmlPullParser.START_TAG && xpp.name == "FirmwareVersion") {
+                        xpp.next()
+                        parsed.fwVersion = xpp.text
+                    } else if (eventType == XmlPullParser.START_TAG && xpp.name == "SerialNumber") {
+                        xpp.next()
+                        parsed.serialNumber = xpp.text
+                    } else if (eventType == XmlPullParser.START_TAG && xpp.name == "HardwareId") {
+                        xpp.next()
+                        parsed.hwID = xpp.text
+                    }
+                    eventType = xpp.next()
+                }
+
+            } catch (e: XmlPullParserException) {
+                e.printStackTrace()
+                return false
+            } catch (e: IOException) {
+                e.printStackTrace()
                 return false
             }
 
+            return true
         }
 
         fun deviceInformationToString(parsed: OnvifDeviceInformation): String {
