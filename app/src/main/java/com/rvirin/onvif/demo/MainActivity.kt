@@ -9,14 +9,12 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import com.rvirin.onvif.R
+import com.rvirin.onvif.onvifcamera.*
 
 import com.rvirin.onvif.onvifcamera.OnvifRequest.Type.GetStreamURI
 import com.rvirin.onvif.onvifcamera.OnvifRequest.Type.GetProfiles
 import com.rvirin.onvif.onvifcamera.OnvifRequest.Type.GetDeviceInformation
-import com.rvirin.onvif.onvifcamera.OnvifResponse
-import com.rvirin.onvif.onvifcamera.OnvifListener
-import com.rvirin.onvif.onvifcamera.OnvifDevice
-import com.rvirin.onvif.onvifcamera.currentDevice
+import com.rvirin.onvif.onvifcamera.OnvifRequest.Type.GetServices
 
 const val RTSP_URL = "com.rvirin.onvif.onvifcamera.demo.RTSP_URL"
 
@@ -43,6 +41,10 @@ class MainActivity : AppCompatActivity(), OnvifListener {
             Log.e("ERROR", "request failed: ${response.request.type} \n Response: ${response.error}")
             toast = Toast.makeText(this, "⛔️ Request failed: ${response.request.type}", Toast.LENGTH_SHORT)
             toast?.show()
+        }
+        // if GetServices have been completed, we request the device information
+            else if (response.request.type == GetServices) {
+            currentDevice.getDeviceInformation()
         }
         // if GetDeviceInformation have been completed, we request the profiles
         else if (response.request.type == GetDeviceInformation) {
@@ -102,7 +104,7 @@ class MainActivity : AppCompatActivity(), OnvifListener {
                 // Create ONVIF device with user inputs and retrieve camera informations
                 currentDevice = OnvifDevice(ipAddress, login, password)
                 currentDevice.listener = this
-                currentDevice.getDeviceInformation()
+                currentDevice.getServices()
 
             } else {
                 toast?.cancel()

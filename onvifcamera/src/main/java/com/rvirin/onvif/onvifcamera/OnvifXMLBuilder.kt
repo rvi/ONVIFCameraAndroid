@@ -15,14 +15,17 @@ import java.util.*
  */
 object OnvifXMLBuilder {
 
-    private val  utcTime = getUTCTime()
-    private val nonce = "" + Random().nextInt()
+    private var utcTime = getUTCTime()
+    private var nonce = java.util.UUID.randomUUID().toString()
 
     /**
      * The header for SOAP 1.2 with digest authentication
      */
     val authorizationHeader: String
         get() {
+
+            utcTime = getUTCTime()
+            nonce = java.util.UUID.randomUUID().toString()
 
             val envelopePart: String
             var authorizationPart = ""
@@ -102,7 +105,7 @@ object OnvifXMLBuilder {
     }
 
     private fun getUTCTime(): String {
-        @SuppressLint("SimpleDateFormat") val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:sss'Z'")
+        @SuppressLint("SimpleDateFormat") val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:000'Z'")
         sdf.timeZone = SimpleTimeZone(SimpleTimeZone.UTC_TIME, "UTC")
         val cal = GregorianCalendar(TimeZone.getTimeZone("UTC"))
         return sdf.format(cal.time)

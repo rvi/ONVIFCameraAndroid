@@ -10,6 +10,7 @@ import com.rvirin.onvif.onvifcamera.OnvifMediaStreamURI.Companion.parseStreamURI
 import com.rvirin.onvif.onvifcamera.OnvifDeviceInformation.Companion.deviceInformationCommand
 import com.rvirin.onvif.onvifcamera.OnvifDeviceInformation.Companion.deviceInformationToString
 import com.rvirin.onvif.onvifcamera.OnvifDeviceInformation.Companion.parseDeviceInformationResponse
+import com.rvirin.onvif.onvifcamera.OnvifServices.Companion.servicesCommand
 import com.rvirin.onvif.onvifcamera.OnvifXMLBuilder.authorizationHeader
 import com.rvirin.onvif.onvifcamera.OnvifXMLBuilder.envelopeEnd
 
@@ -36,10 +37,29 @@ interface OnvifListener {
 class OnvifRequest(val xmlCommand: String, val type: Type) {
 
     enum class Type {
+        GetServices,
         GetDeviceInformation,
         GetProfiles,
         GetStreamURI;
+
+        fun namespace(): String {
+            when (this) {
+                GetServices, GetDeviceInformation -> return "http://www.onvif.org/ver10/device/wsdl"
+                GetProfiles, GetStreamURI  -> return "http://www.onvif.org/ver20/media/wsdl"
+            }
+        }
     }
+}
+
+/**
+ * Paths used to call each differents web services. These paths will be updated
+ * by calling getServices.
+ */
+class OnvifCameraPaths {
+    var services = "/onvif/device_service"
+    var deviceInformation = "/onvif/device_service"
+    var profiles = "/onvif/device_service"
+    var streamURI = "/onvif/device_service"
 }
 
 /**
@@ -84,19 +104,24 @@ class OnvifResponse(val request: OnvifRequest) {
  * @param username the username to login on the camera
  * @param password the password to login on the camera
  */
-class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField val password: String) {
+class OnvifDevice(val ipAddress: String, @JvmField val username: String, @JvmField val password: String) {
 
     var listener: OnvifListener? = null
     /// We use this variable to know if the connection has been successful (retrieve device information)
     var isConnected = false
 
-    private val url = "http://$IPAddress/onvif/device_service"
+    private val url = "http://$ipAddress"
     private val deviceInformation = OnvifDeviceInformation()
+    private val paths = OnvifCameraPaths()
 
     var mediaProfiles: List<MediaProfile> = emptyList()
 
     var rtspURI : String? = null
 
+    fun getServices() {
+        val request = OnvifRequest(servicesCommand, OnvifRequest.Type.GetServices)
+        ONVIFcommunication().execute(request)
+    }
 
     fun getDeviceInformation() {
         val request = OnvifRequest(deviceInformationCommand, OnvifRequest.Type.GetDeviceInformation)
@@ -150,7 +175,7 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
             var request: Request? = null
             try {
                 request = Request.Builder()
-                        .url(currentDevice.url)
+                        .url(urlForRequest(onvifRequest))
                         .addHeader("Content-Type","text/xml; charset=utf-8")
                         .post(reqBody)
                         .build()
@@ -186,6 +211,21 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
         }
 
         /**
+         * @return the appropriate URL for calling a web service.
+         * Working if the camera is behind a firewall also.
+         * @param request the kind of request we're processing.
+         */
+        fun urlForRequest(request: OnvifRequest): String {
+
+            when (request.type) {
+                OnvifRequest.Type.GetServices -> return currentDevice.url + currentDevice.paths.services
+                OnvifRequest.Type.GetDeviceInformation -> return currentDevice.url + currentDevice.paths.deviceInformation
+                OnvifRequest.Type.GetProfiles -> return currentDevice.url + currentDevice.paths.profiles
+                OnvifRequest.Type.GetStreamURI -> return currentDevice.url + currentDevice.paths.streamURI
+            }
+        }
+
+        /**
          * Util function to log the body of a `Request`
          */
         private fun bodyToString(request: Request): String {
@@ -214,14 +254,31 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
 
     /**
      * Util method to append the credentials to the rtsp URI
+     * Working if the camera is behind a firewall.
      * @param streamURI the URI to modify
      * @return the rtsp URI with the credentials
      */
     private fun appendCredentials(streamURI: String): String {
         val protocol = "rtsp://"
-        val startIndex = protocol.length
-        val uri = streamURI.substring(startIndex)
-        return protocol + currentDevice.username + ":" + currentDevice.password + "@" + uri
+        val uri = streamURI.substring(protocol.length)
+        var port: String = ""
+
+        // Retrieve the rtsp port
+        val portIndex = uri.indexOf(":")
+        if (portIndex > 0) {
+            val portEndIndex = uri.indexOf("/")
+            port = uri.substring(portIndex, portEndIndex)
+        }
+
+        // path and query
+        val path = uri.substringAfter('/')
+
+        // We take the URI passed as an input by the user (in case the
+        // camera is behind a firewall).
+        val ipAddressWithoutPort = ipAddress.substringBefore(":")
+
+        return protocol + currentDevice.username + ":" + currentDevice.password + "@" +
+                ipAddressWithoutPort + port + "/" + path
     }
 
     /**
@@ -234,7 +291,12 @@ class OnvifDevice(IPAddress: String, @JvmField val username: String, @JvmField v
             parsedResult = "Communication error trying to get " + result.request + ":\n\n" + result.error
 
         } else {
-            if (result.request.type == OnvifRequest.Type.GetDeviceInformation) {
+            if (result.request.type == OnvifRequest.Type.GetServices) {
+                result.result?.let {
+                    parsedResult = OnvifServices.parseServicesResponse(it, currentDevice.paths)
+                }
+            }
+            else if (result.request.type == OnvifRequest.Type.GetDeviceInformation) {
                 isConnected = true
                 if (parseDeviceInformationResponse(result.result!!, currentDevice.deviceInformation)) {
                     parsedResult = deviceInformationToString(currentDevice.deviceInformation)
