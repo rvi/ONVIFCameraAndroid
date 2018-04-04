@@ -21,41 +21,14 @@ object OnvifXMLBuilder {
     /**
      * The header for SOAP 1.2 with digest authentication
      */
-    val authorizationHeader: String
+    val soapHeader: String
         get() {
-
-            utcTime = getUTCTime()
-            nonce = java.util.UUID.randomUUID().toString()
-
-            val envelopePart: String
-            var authorizationPart = ""
-
-            envelopePart = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
+            return "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
                     "<soap:Envelope " +
                     "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
                     "xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" " +
-                    "xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\" >"
-            if (!currentDevice.username.equals("", ignoreCase = true)) {
-                authorizationPart = "<soap:Header>" +
-                        "<wsse:Security xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\">" +
-                        "<wsse:UsernameToken xmlns:wsu=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd\">" +
-                        "<wsse:Username>" +
-                        currentDevice.username +
-                        "</wsse:Username>" +
-                        "<wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest\">" +
-                        encryptPassword(currentDevice.password) +
-                        "</wsse:Password>" +
-                        "<wsse:Nonce EncodingType=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary\">" +
-                        toBase64(nonce) +
-                        "</wsse:Nonce>" +
-                        "<wsu:Created>" +
-                        utcTime +
-                        "</wsu:Created>" +
-                        "</wsse:UsernameToken>" +
-                        "</wsse:Security>" +
-                        "</soap:Header>"
-            }
-            return "$envelopePart$authorizationPart<soap:Body>"
+                    "xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\" >" +
+                    "<soap:Body>"
         }
 
     val envelopeEnd: String

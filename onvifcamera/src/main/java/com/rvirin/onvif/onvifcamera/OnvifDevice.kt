@@ -1,25 +1,28 @@
 package com.rvirin.onvif.onvifcamera
 
+
 import android.os.AsyncTask
 import android.util.Log
-
-
-import com.rvirin.onvif.onvifcamera.OnvifMediaProfiles.Companion.getProfilesCommand
-import com.rvirin.onvif.onvifcamera.OnvifMediaStreamURI.Companion.getStreamURICommand
-import com.rvirin.onvif.onvifcamera.OnvifMediaStreamURI.Companion.parseStreamURIXML
 import com.rvirin.onvif.onvifcamera.OnvifDeviceInformation.Companion.deviceInformationCommand
 import com.rvirin.onvif.onvifcamera.OnvifDeviceInformation.Companion.deviceInformationToString
 import com.rvirin.onvif.onvifcamera.OnvifDeviceInformation.Companion.parseDeviceInformationResponse
+import com.rvirin.onvif.onvifcamera.OnvifMediaProfiles.Companion.getProfilesCommand
+import com.rvirin.onvif.onvifcamera.OnvifMediaStreamURI.Companion.getStreamURICommand
+import com.rvirin.onvif.onvifcamera.OnvifMediaStreamURI.Companion.parseStreamURIXML
 import com.rvirin.onvif.onvifcamera.OnvifServices.Companion.servicesCommand
-import com.rvirin.onvif.onvifcamera.OnvifXMLBuilder.authorizationHeader
 import com.rvirin.onvif.onvifcamera.OnvifXMLBuilder.envelopeEnd
-
-import okhttp3.*
+import com.rvirin.onvif.onvifcamera.OnvifXMLBuilder.soapHeader
+import okhttp3.MediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody
 import okio.Buffer
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-@JvmField var currentDevice = OnvifDevice("", "", "")
+
+@JvmField
+var currentDevice = OnvifDevice("", "", "")
 
 interface OnvifListener {
     /**
@@ -45,7 +48,7 @@ class OnvifRequest(val xmlCommand: String, val type: Type) {
         fun namespace(): String {
             when (this) {
                 GetServices, GetDeviceInformation -> return "http://www.onvif.org/ver10/device/wsdl"
-                GetProfiles, GetStreamURI  -> return "http://www.onvif.org/ver20/media/wsdl"
+                GetProfiles, GetStreamURI -> return "http://www.onvif.org/ver20/media/wsdl"
             }
         }
     }
@@ -98,7 +101,7 @@ class OnvifResponse(val request: OnvifRequest) {
 
 /**
  * @author Remy Virin on 04/03/2018.
- * This class represent an ONVIF device and contains the methods to interact with it
+ * This class represents an ONVIF device and contains the methods to interact with it
  * (getDeviceInformation, getProfiles and getStreamURI).
  * @param IPAddress The IP address of the camera
  * @param username the username to login on the camera
@@ -116,7 +119,7 @@ class OnvifDevice(val ipAddress: String, @JvmField val username: String, @JvmFie
 
     var mediaProfiles: List<MediaProfile> = emptyList()
 
-    var rtspURI : String? = null
+    var rtspURI: String? = null
 
     fun getServices() {
         val request = OnvifRequest(servicesCommand, OnvifRequest.Type.GetServices)
@@ -142,8 +145,8 @@ class OnvifDevice(val ipAddress: String, @JvmField val username: String, @JvmFie
     }
 
     fun getStreamURI(profile: MediaProfile) {
-            val request = OnvifRequest(getStreamURICommand(profile), OnvifRequest.Type.GetStreamURI)
-            ONVIFcommunication().execute(request)
+        val request = OnvifRequest(getStreamURICommand(profile), OnvifRequest.Type.GetStreamURI)
+        ONVIFcommunication().execute(request)
     }
 
     /**
@@ -169,14 +172,14 @@ class OnvifDevice(val ipAddress: String, @JvmField val username: String, @JvmFie
             val reqBodyType = MediaType.parse("application/soap+xml; charset=utf-8;")
 
             val reqBody = RequestBody.create(reqBodyType,
-                    authorizationHeader + onvifRequest.xmlCommand + envelopeEnd)
+                    soapHeader + onvifRequest.xmlCommand + envelopeEnd)
 
             /* Request to ONVIF device */
             var request: Request? = null
             try {
                 request = Request.Builder()
                         .url(urlForRequest(onvifRequest))
-                        .addHeader("Content-Type","text/xml; charset=utf-8")
+                        .addHeader("Content-Type", "text/xml; charset=utf-8")
                         .post(reqBody)
                         .build()
             } catch (e: IllegalArgumentException) {
@@ -184,14 +187,37 @@ class OnvifDevice(val ipAddress: String, @JvmField val username: String, @JvmFie
                 e.printStackTrace()
             }
 
-            val result = OnvifResponse(onvifRequest)
+            var result = OnvifResponse(onvifRequest)
 
             if (request != null) {
                 try {
                     /* Response from ONVIF device */
-                    val response = client.newCall(request).execute()
+                    var response = client.newCall(request).execute()
                     Log.d("BODY", bodyToString(request))
                     Log.d("RESPONSE", response.toString())
+                    Log.d("HEADERS", response.headers().toString())
+
+                    if (response.code() == 401) {
+                        /* Retrieve Digest header */
+                        val digestHeader = response.header("WWW-Authenticate")
+                        val digestInformation = OnvifDigestInformation(username, password, pathForRequest(onvifRequest), digestHeader!!)
+                        val authorizationHeader = digestInformation.authorizationHeader
+                        Log.d("digestHeader", authorizationHeader)
+
+                        try {
+                            request = Request.Builder().url(urlForRequest(onvifRequest))
+                                    .addHeader("Content-Type", "text/xml; charset=utf-8")
+                                    .addHeader("Authorization", authorizationHeader)
+                                    .post(reqBody)
+                                    .build()
+                        } catch (e: IllegalArgumentException) {
+                            Log.e("ERROR", e.message!!)
+                            e.printStackTrace()
+                        }
+
+                        result = OnvifResponse(onvifRequest)
+                        response = client.newCall(request).execute()
+                    }
 
                     if (response.code() != 200) {
                         val responseBody = response.body()!!.string()
@@ -216,14 +242,18 @@ class OnvifDevice(val ipAddress: String, @JvmField val username: String, @JvmFie
          * @param request the kind of request we're processing.
          */
         fun urlForRequest(request: OnvifRequest): String {
+            return currentDevice.url + pathForRequest(request)
+        }
 
+        fun pathForRequest(request: OnvifRequest): String {
             when (request.type) {
-                OnvifRequest.Type.GetServices -> return currentDevice.url + currentDevice.paths.services
-                OnvifRequest.Type.GetDeviceInformation -> return currentDevice.url + currentDevice.paths.deviceInformation
-                OnvifRequest.Type.GetProfiles -> return currentDevice.url + currentDevice.paths.profiles
-                OnvifRequest.Type.GetStreamURI -> return currentDevice.url + currentDevice.paths.streamURI
+                OnvifRequest.Type.GetServices -> return currentDevice.paths.services
+                OnvifRequest.Type.GetDeviceInformation -> return currentDevice.paths.deviceInformation
+                OnvifRequest.Type.GetProfiles -> return currentDevice.paths.profiles
+                OnvifRequest.Type.GetStreamURI -> return currentDevice.paths.streamURI
             }
         }
+
 
         /**
          * Util function to log the body of a `Request`
@@ -295,8 +325,7 @@ class OnvifDevice(val ipAddress: String, @JvmField val username: String, @JvmFie
                 result.result?.let {
                     parsedResult = OnvifServices.parseServicesResponse(it, currentDevice.paths)
                 }
-            }
-            else if (result.request.type == OnvifRequest.Type.GetDeviceInformation) {
+            } else if (result.request.type == OnvifRequest.Type.GetDeviceInformation) {
                 isConnected = true
                 if (parseDeviceInformationResponse(result.result!!, currentDevice.deviceInformation)) {
                     parsedResult = deviceInformationToString(currentDevice.deviceInformation)
