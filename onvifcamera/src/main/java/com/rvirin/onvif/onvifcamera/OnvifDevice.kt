@@ -195,14 +195,13 @@ class OnvifDevice(val ipAddress: String, @JvmField val username: String, @JvmFie
                     var response = client.newCall(request).execute()
                     Log.d("BODY", bodyToString(request))
                     Log.d("RESPONSE", response.toString())
-                    Log.d("HEADERS", response.headers().toString())
 
                     if (response.code() == 401) {
                         /* Retrieve Digest header */
                         val digestHeader = response.header("WWW-Authenticate")
                         val digestInformation = OnvifDigestInformation(username, password, pathForRequest(onvifRequest), digestHeader!!)
                         val authorizationHeader = digestInformation.authorizationHeader
-                        Log.d("digestHeader", authorizationHeader)
+                        Log.d("AUTHORIZATION HEADER", authorizationHeader)
 
                         try {
                             request = Request.Builder().url(urlForRequest(onvifRequest))
