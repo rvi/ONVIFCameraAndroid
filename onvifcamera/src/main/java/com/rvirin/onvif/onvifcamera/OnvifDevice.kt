@@ -342,8 +342,7 @@ class OnvifDevice(val ipAddress: String, @JvmField val username: String, @JvmFie
                 }
                 OnvifRequest.Type.GetSnapshotURI -> {
                     result.result?.let {
-                        val snapshotURI = parseStreamURIXML(it)
-                        currentDevice.snapshotURI = appendCredentials(snapshotURI)
+                        currentDevice.snapshotURI = parseStreamURIXML(it)
                         parsedResult = "JPEG URI retrieved."
                     }
                 }
