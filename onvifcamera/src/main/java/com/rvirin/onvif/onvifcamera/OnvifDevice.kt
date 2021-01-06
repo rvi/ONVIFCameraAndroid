@@ -1,7 +1,6 @@
 package com.rvirin.onvif.onvifcamera
 
 
-import android.os.AsyncTask
 import android.util.Log
 import com.burgstaller.okhttp.DispatchingAuthenticator
 import com.burgstaller.okhttp.basic.BasicAuthenticator
@@ -14,6 +13,9 @@ import com.rvirin.onvif.onvifcamera.OnvifMediaProfiles.Companion.getProfilesComm
 import com.rvirin.onvif.onvifcamera.OnvifServices.Companion.servicesCommand
 import com.rvirin.onvif.onvifcamera.OnvifXMLBuilder.envelopeEnd
 import com.rvirin.onvif.onvifcamera.OnvifXMLBuilder.soapHeader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -128,21 +130,20 @@ class OnvifDevice(val ipAddress: String, @JvmField val username: String, @JvmFie
 
     fun getServices() {
         val request = OnvifRequest(servicesCommand, OnvifRequest.Type.GetServices)
-        ONVIFcommunication().execute(request)
+        execute(request)
     }
 
     fun getDeviceInformation() {
         val request = OnvifRequest(deviceInformationCommand, OnvifRequest.Type.GetDeviceInformation)
-        ONVIFcommunication().execute(request)
+        execute(request)
     }
 
     fun getProfiles() {
         val request = OnvifRequest(getProfilesCommand(), OnvifRequest.Type.GetProfiles)
-        ONVIFcommunication().execute(request)
+        execute(request)
     }
 
     fun getStreamURI() {
-
         mediaProfiles.firstOrNull { it.encoding == "MPEG4" || it.encoding == "H264" }?.let {
             getStreamURI(it)
         }
@@ -150,7 +151,7 @@ class OnvifDevice(val ipAddress: String, @JvmField val username: String, @JvmFie
 
     fun getStreamURI(profile: MediaProfile) {
         val request = OnvifRequest(getStreamURICommand(profile), OnvifRequest.Type.GetStreamURI)
-        ONVIFcommunication().execute(request)
+        execute(request)
     }
 
     fun getSnapshotURI() {
@@ -161,23 +162,14 @@ class OnvifDevice(val ipAddress: String, @JvmField val username: String, @JvmFie
 
     fun getSnapshotURI(profile: MediaProfile) {
         val request = OnvifRequest(getSnapshotURICommand(profile), OnvifRequest.Type.GetSnapshotURI)
-        ONVIFcommunication().execute(request)
+        execute(request)
     }
 
     /**
-     * Communication in Async Task between Android and ONVIF camera
+     * Execute async task in background and ONVIF camera
      */
-    private inner class ONVIFcommunication : AsyncTask<OnvifRequest, Void, OnvifResponse>() {
-
-        /**
-         * Background process of communication
-         *
-         * @param params The Onvif Request to execute
-         * @return `OnvifResponse`
-         */
-        override fun doInBackground(vararg params: OnvifRequest): OnvifResponse {
-            val onvifRequest = params[0]
-
+    private fun execute(onvifRequest: OnvifRequest) {
+        GlobalScope.launch(Dispatchers.IO) {
             val credentials =  Credentials(username, password)
             val authenticator = DispatchingAuthenticator.Builder()
                     .with("digest", DigestAuthenticator(credentials))
@@ -224,52 +216,44 @@ class OnvifDevice(val ipAddress: String, @JvmField val username: String, @JvmFie
                 e.printStackTrace()
             }
 
-            return result
-        }
-
-        /**
-         * @return the appropriate URL for calling a web service.
-         * Working if the camera is behind a firewall also.
-         * @param request the kind of request we're processing.
-         */
-        fun urlForRequest(request: OnvifRequest): String {
-            return currentDevice.url + pathForRequest(request)
-        }
-
-        fun pathForRequest(request: OnvifRequest): String {
-            return when (request.type) {
-                OnvifRequest.Type.GetServices -> currentDevice.paths.services
-                OnvifRequest.Type.GetDeviceInformation -> currentDevice.paths.deviceInformation
-                OnvifRequest.Type.GetProfiles -> currentDevice.paths.profiles
-                OnvifRequest.Type.GetStreamURI -> currentDevice.paths.streamURI
-                OnvifRequest.Type.GetSnapshotURI -> currentDevice.paths.snapshotURI
-            }
-        }
-
-
-        /**
-         * Util function to log the body of a `Request`
-         */
-        private fun bodyToString(request: Request): String {
-            return try {
-                val copy = request.newBuilder().build()
-                val buffer = Buffer()
-                copy.body!!.writeTo(buffer)
-                buffer.readUtf8()
-            } catch (e: IOException) {
-                "did not work"
-            }
-        }
-
-        /**
-         * Called when AsyncTask background process is finished
-         *
-         * @param result the `OnvifResponse`
-         */
-        override fun onPostExecute(result: OnvifResponse) {
             Log.d("RESULT", result.success.toString())
 
-            listener?.requestPerformed(result)
+            GlobalScope.launch(Dispatchers.Main) {
+                listener?.requestPerformed(result)
+            }
+        }
+    }
+
+    /**
+     * @return the appropriate URL for calling a web service.
+     * Working if the camera is behind a firewall also.
+     * @param request the kind of request we're processing.
+     */
+    private fun urlForRequest(request: OnvifRequest): String {
+        return currentDevice.url + pathForRequest(request)
+    }
+
+    private fun pathForRequest(request: OnvifRequest): String {
+        return when (request.type) {
+            OnvifRequest.Type.GetServices -> currentDevice.paths.services
+            OnvifRequest.Type.GetDeviceInformation -> currentDevice.paths.deviceInformation
+            OnvifRequest.Type.GetProfiles -> currentDevice.paths.profiles
+            OnvifRequest.Type.GetStreamURI -> currentDevice.paths.streamURI
+            OnvifRequest.Type.GetSnapshotURI -> currentDevice.paths.snapshotURI
+        }
+    }
+
+    /**
+     * Util function to log the body of a `Request`
+     */
+    private fun bodyToString(request: Request): String {
+        return try {
+            val copy = request.newBuilder().build()
+            val buffer = Buffer()
+            copy.body!!.writeTo(buffer)
+            buffer.readUtf8()
+        } catch (e: IOException) {
+            "did not work"
         }
     }
 
