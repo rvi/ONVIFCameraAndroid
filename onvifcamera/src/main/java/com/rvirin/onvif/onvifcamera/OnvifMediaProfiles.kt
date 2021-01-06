@@ -12,7 +12,7 @@ import java.io.StringReader
  * @OnvifMediaProfiles: provide the xml command to retrieve the profiles and its parser.
  */
 
-class MediaProfile(val name: String, val token: String)
+class MediaProfile(val name: String, val token: String, val encoding: String)
 
 
 class OnvifMediaProfiles {
@@ -28,23 +28,13 @@ class OnvifMediaProfiles {
             try {
                 val factory = XmlPullParserFactory.newInstance()
                 factory.isNamespaceAware = true
-                val xpp = factory.newPullParser()
-                xpp.setInput(StringReader(toParse))
-                var eventType = xpp.eventType
-                while (eventType != XmlPullParser.END_DOCUMENT) {
-
-                    if (eventType == XmlPullParser.START_TAG && xpp.name == "Profiles") {
-
-                        val token = xpp.getAttributeValue(null, "token")
-                        xpp.nextTag()
-                        if (xpp.name == "Name") {
-                            xpp.next()
-                            val name = xpp.text
-                            val profile = MediaProfile(name, token)
-                            results.add(profile)
-                        }
+                val parser = factory.newPullParser()
+                parser.setInput(StringReader(toParse))
+                parser.nextTag()
+                while (parser.next() != XmlPullParser.END_DOCUMENT) {
+                    if (parser.eventType == XmlPullParser.START_TAG && parser.name == "Profiles") {
+                        results.add(readProfile(parser))
                     }
-                    eventType = xpp.next()
                 }
 
             } catch (e: XmlPullParserException) {
@@ -54,6 +44,56 @@ class OnvifMediaProfiles {
             }
 
             return results
+        }
+
+        fun readProfile(parser: XmlPullParser): MediaProfile {
+            // parser.require(XmlPullParser.START_TAG, )
+            val token = parser.getAttributeValue(null, "token")
+            var name = ""
+            var encoding = ""
+
+            while (parser.next() != XmlPullParser.END_TAG) {
+                when (parser.name) {
+                    "Name" -> name = readText(parser)
+                    "VideoEncoderConfiguration" -> encoding = readEncoder(parser)
+                    else -> skip(parser)
+                }
+            }
+            return MediaProfile(name, token, encoding)
+        }
+
+        fun readEncoder(parser: XmlPullParser): String {
+            var encoding = ""
+            while (parser.next() != XmlPullParser.END_TAG) {
+                if (parser.name == "Encoding") {
+                    encoding = readText(parser)
+                } else {
+                    skip(parser)
+                }
+            }
+            return encoding
+        }
+
+        fun readText(parser: XmlPullParser): String {
+            var result = ""
+            if (parser.next() == XmlPullParser.TEXT) {
+                result = parser.text
+                parser.nextTag()
+            }
+            return result
+        }
+
+        fun skip(parser: XmlPullParser) {
+            if (parser.eventType != XmlPullParser.START_TAG) {
+                throw IllegalStateException()
+            }
+            var depth = 1
+            while (depth != 0) {
+                when (parser.next()) {
+                    XmlPullParser.END_TAG -> depth--
+                    XmlPullParser.START_TAG -> depth++
+                }
+            }
         }
     }
 }
