@@ -3,6 +3,10 @@ package com.rvirin.onvif.onvifcamera
 
 import android.os.AsyncTask
 import android.util.Log
+import com.burgstaller.okhttp.DispatchingAuthenticator
+import com.burgstaller.okhttp.basic.BasicAuthenticator
+import com.burgstaller.okhttp.digest.Credentials
+import com.burgstaller.okhttp.digest.DigestAuthenticator
 import com.rvirin.onvif.onvifcamera.OnvifDeviceInformation.Companion.deviceInformationCommand
 import com.rvirin.onvif.onvifcamera.OnvifDeviceInformation.Companion.deviceInformationToString
 import com.rvirin.onvif.onvifcamera.OnvifDeviceInformation.Companion.parseDeviceInformationResponse
@@ -174,7 +178,13 @@ class OnvifDevice(val ipAddress: String, @JvmField val username: String, @JvmFie
         override fun doInBackground(vararg params: OnvifRequest): OnvifResponse {
             val onvifRequest = params[0]
 
+            val credentials =  Credentials(username, password)
+            val authenticator = DispatchingAuthenticator.Builder()
+                    .with("digest", DigestAuthenticator(credentials))
+                    .with("basic", BasicAuthenticator(credentials))
+                    .build()
             val client = OkHttpClient.Builder()
+                    .authenticator(authenticator)
                     .connectTimeout(10000, TimeUnit.SECONDS)
                     .writeTimeout(100, TimeUnit.SECONDS)
                     .readTimeout(10000, TimeUnit.SECONDS)
@@ -184,52 +194,20 @@ class OnvifDevice(val ipAddress: String, @JvmField val username: String, @JvmFie
 
             val reqBody = (soapHeader + onvifRequest.xmlCommand + envelopeEnd).toRequestBody(reqBodyType)
 
-            var result = OnvifResponse(onvifRequest)
+            val result = OnvifResponse(onvifRequest)
 
-            /* Request to ONVIF device */
-            val request = try {
-                Request.Builder()
+            try {
+                /* Request to ONVIF device */
+                val request = Request.Builder()
                         .url(urlForRequest(onvifRequest))
                         .addHeader("Content-Type", "text/xml; charset=utf-8")
                         .post(reqBody)
                         .build()
-            } catch (e: IllegalArgumentException) {
-                Log.e("ERROR", e.message!!)
-                e.printStackTrace()
-                return result
-            }
 
-
-
-            try {
                 /* Response from ONVIF device */
-                var response = client.newCall(request).execute()
+                val response = client.newCall(request).execute()
                 Log.d("BODY", bodyToString(request))
                 Log.d("RESPONSE", response.toString())
-
-                if (response.code == 401) {
-                    /* Retrieve Digest header */
-                    val digestHeader = response.header("WWW-Authenticate")
-                    val digestInformation = OnvifDigestInformation(username, password, pathForRequest(onvifRequest), digestHeader!!)
-                    val authorizationHeader = digestInformation.authorizationHeader
-                    Log.d("AUTHORIZATION HEADER", authorizationHeader)
-
-
-                    val authorizedRequest = try {
-                            Request.Builder().url(urlForRequest(onvifRequest))
-                                .addHeader("Content-Type", "text/xml; charset=utf-8")
-                                .addHeader("Authorization", authorizationHeader)
-                                .post(reqBody)
-                                .build()
-                    } catch (e: IllegalArgumentException) {
-                        Log.e("ERROR", e.message!!)
-                        e.printStackTrace()
-                        return result
-                    }
-
-                    result = OnvifResponse(onvifRequest)
-                    response = client.newCall(authorizedRequest).execute()
-                }
 
                 if (response.code != 200) {
                     val message = "${response.code} - ${response.message}\n${response.body?.string()}"
@@ -241,6 +219,9 @@ class OnvifDevice(val ipAddress: String, @JvmField val username: String, @JvmFie
                 }
             } catch (e: IOException) {
                 result.updateResponse(false, e.message!!)
+            } catch (e: IllegalArgumentException) {
+                Log.e("ERROR", e.message!!)
+                e.printStackTrace()
             }
 
             return result
