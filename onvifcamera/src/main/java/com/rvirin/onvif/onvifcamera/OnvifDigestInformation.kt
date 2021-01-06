@@ -11,7 +11,7 @@ class OnvifDigestInformation(val username: String, val password: String, val uri
     private var cnonce: String = ""
     private var nc: String = "00000001"
 
-    var authorizationHeader: String? = ""
+    val authorizationHeader: String
         get() {
             extractDigest()
             val ha1 = md5("$username:$realm:$password")
@@ -20,7 +20,7 @@ class OnvifDigestInformation(val username: String, val password: String, val uri
             return "Digest username=\"$username\", realm=\"$realm\", nonce=\"$nonce\", uri=\"$uri\", response=\"$response\", cnonce=\"$cnonce\", nc=$nc, qop=\"$qop\""
         }
 
-    private fun md5(string: String): String? {
+    private fun md5(string: String): String {
         val HEX_CHARS = "0123456789abcdef"
         val bytes = MessageDigest.getInstance(MessageDigestAlgorithms.MD5)
                 .digest(string.toByteArray())
@@ -45,11 +45,11 @@ class OnvifDigestInformation(val username: String, val password: String, val uri
     }
 
     private fun splitAuthFields(authString: String): Map<String, String> {
-        return authString.split(",").associate({
+        return authString.split(",").associate {
             val pair = it.split("=", limit = 2)
             val key = pair[0].trim()
             val value = pair[1].replace("\"", "").trim()
             Pair(key, value)
-        })
+        }
     }
 }
