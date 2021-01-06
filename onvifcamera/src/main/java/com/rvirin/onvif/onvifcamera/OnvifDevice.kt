@@ -16,13 +16,14 @@ import com.rvirin.onvif.onvifcamera.OnvifXMLBuilder.soapHeader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.Buffer
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 
 @JvmField
@@ -72,17 +73,20 @@ class OnvifCameraPaths {
 
 /**
  * Contains the response from the Onvif device
- * @param success if the request have been successful
- * @param parsingUIMessage message to be displayed to the user
- * @param result The xml string if the request have been successful
- * @param error The xml string if the request have not been successful
  */
 class OnvifResponse(val request: OnvifRequest) {
 
+    /**
+     * if the request have been successful
+     */
     var success = false
         private set
 
     private var message = ""
+
+    /**
+     * message to be displayed to the user
+     */
     var parsingUIMessage = ""
 
     fun updateResponse(success: Boolean, message: String) {
@@ -90,12 +94,18 @@ class OnvifResponse(val request: OnvifRequest) {
         this.message = message
     }
 
+    /**
+     * The xml string if the request have been successful
+     */
     val result: String?
         get() {
             return if (success) message
             else null
         }
 
+    /**
+     * The xml string if the request have not been successful
+     */
     val error: String?
         get() {
             return if (!success) message
@@ -125,103 +135,117 @@ class OnvifDevice(val ipAddress: String, @JvmField val username: String, @JvmFie
 
     var mediaProfiles: List<MediaProfile> = emptyList()
 
-    var rtspURI: String? = null
-    var snapshotURI: String? = null
-
     fun getServices() {
         val request = OnvifRequest(servicesCommand, OnvifRequest.Type.GetServices)
-        execute(request)
+        enqueue(request)
     }
 
     fun getDeviceInformation() {
         val request = OnvifRequest(deviceInformationCommand, OnvifRequest.Type.GetDeviceInformation)
-        execute(request)
+        enqueue(request)
     }
 
     fun getProfiles() {
         val request = OnvifRequest(getProfilesCommand(), OnvifRequest.Type.GetProfiles)
-        execute(request)
+        enqueue(request)
     }
 
-    fun getStreamURI() {
-        mediaProfiles.firstOrNull { it.encoding == "MPEG4" || it.encoding == "H264" }?.let {
+    suspend fun getStreamURI(): String? {
+        return mediaProfiles.firstOrNull { it.encoding == "MPEG4" || it.encoding == "H264" }?.let {
             getStreamURI(it)
         }
     }
 
-    fun getStreamURI(profile: MediaProfile) {
+    suspend fun getStreamURI(profile: MediaProfile): String? {
         val request = OnvifRequest(getStreamURICommand(profile), OnvifRequest.Type.GetStreamURI)
-        execute(request)
+        return execute(request).result?.let { appendCredentials(parseStreamURIXML(it)) }
     }
 
-    fun getSnapshotURI() {
-        mediaProfiles.firstOrNull { it.encoding == "JPEG" }?.let {
+    suspend fun getSnapshotURI(): String? {
+        return mediaProfiles.firstOrNull { it.encoding == "JPEG" }?.let {
             getSnapshotURI(it)
         }
     }
 
-    fun getSnapshotURI(profile: MediaProfile) {
+    suspend fun getSnapshotURI(profile: MediaProfile): String? {
         val request = OnvifRequest(getSnapshotURICommand(profile), OnvifRequest.Type.GetSnapshotURI)
-        execute(request)
+        return execute(request).result?.let { parseStreamURIXML(it) }
     }
 
     /**
      * Execute async task in background and ONVIF camera
      */
-    private fun execute(onvifRequest: OnvifRequest) {
+    private fun enqueue(onvifRequest: OnvifRequest) {
         GlobalScope.launch(Dispatchers.IO) {
-            val credentials =  Credentials(username, password)
-            val authenticator = DispatchingAuthenticator.Builder()
-                    .with("digest", DigestAuthenticator(credentials))
-                    .with("basic", BasicAuthenticator(credentials))
-                    .build()
-            val client = OkHttpClient.Builder()
-                    .authenticator(authenticator)
-                    .connectTimeout(10000, TimeUnit.SECONDS)
-                    .writeTimeout(100, TimeUnit.SECONDS)
-                    .readTimeout(10000, TimeUnit.SECONDS)
-                    .build()
-
-            val reqBodyType = "application/soap+xml; charset=utf-8;".toMediaTypeOrNull()
-
-            val reqBody = (soapHeader + onvifRequest.xmlCommand + envelopeEnd).toRequestBody(reqBodyType)
-
-            val result = OnvifResponse(onvifRequest)
-
-            try {
-                /* Request to ONVIF device */
-                val request = Request.Builder()
-                        .url(urlForRequest(onvifRequest))
-                        .addHeader("Content-Type", "text/xml; charset=utf-8")
-                        .post(reqBody)
-                        .build()
-
-                /* Response from ONVIF device */
-                val response = client.newCall(request).execute()
-                Log.d("BODY", bodyToString(request))
-                Log.d("RESPONSE", response.toString())
-
-                if (response.code != 200) {
-                    val message = "${response.code} - ${response.message}\n${response.body?.string()}"
-                    result.updateResponse(false, message)
-                } else {
-                    result.updateResponse(true, response.body!!.string())
-                    val uiMessage = parseOnvifResponses(result)
-                    result.parsingUIMessage = uiMessage
-                }
-            } catch (e: IOException) {
-                result.updateResponse(false, e.message!!)
-            } catch (e: IllegalArgumentException) {
-                Log.e("ERROR", e.message!!)
-                e.printStackTrace()
-            }
-
-            Log.d("RESULT", result.success.toString())
-
-            GlobalScope.launch(Dispatchers.Main) {
-                listener?.requestPerformed(result)
-            }
+            execute(onvifRequest)
         }
+    }
+
+    suspend fun execute(onvifRequest: OnvifRequest): OnvifResponse {
+        val credentials =  Credentials(username, password)
+        val authenticator = DispatchingAuthenticator.Builder()
+                .with("digest", DigestAuthenticator(credentials))
+                .with("basic", BasicAuthenticator(credentials))
+                .build()
+        val client = OkHttpClient.Builder()
+                .authenticator(authenticator)
+                .connectTimeout(10000, TimeUnit.SECONDS)
+                .writeTimeout(100, TimeUnit.SECONDS)
+                .readTimeout(10000, TimeUnit.SECONDS)
+                .build()
+
+        val reqBodyType = "application/soap+xml; charset=utf-8;".toMediaTypeOrNull()
+
+        val reqBody = (soapHeader + onvifRequest.xmlCommand + envelopeEnd).toRequestBody(reqBodyType)
+
+        val result = OnvifResponse(onvifRequest)
+
+        try {
+            /* Request to ONVIF device */
+            val request = Request.Builder()
+                    .url(urlForRequest(onvifRequest))
+                    .addHeader("Content-Type", "text/xml; charset=utf-8")
+                    .post(reqBody)
+                    .build()
+
+            /* Response from ONVIF device */
+            suspendCoroutine { cont ->
+                client.newCall(request).enqueue(object: Callback {
+                    override fun onFailure(call: Call, e: IOException) {
+                        result.updateResponse(false, e.message!!)
+                        cont.resume(Unit)
+                    }
+
+                    override fun onResponse(call: Call, response: Response) {
+                        Log.d("BODY", bodyToString(request))
+                        Log.d("RESPONSE", response.toString())
+
+                        if (response.code != 200) {
+                            val message = "${response.code} - ${response.message}\n${response.body?.string()}"
+                            result.updateResponse(false, message)
+                        } else {
+                            result.updateResponse(true, response.body!!.string())
+                            val uiMessage = parseOnvifResponses(result)
+                            result.parsingUIMessage = uiMessage
+                        }
+                        cont.resume(Unit)
+                    }
+                })
+            }
+        } catch (e: IOException) {
+            result.updateResponse(false, e.message!!)
+        } catch (e: IllegalArgumentException) {
+            Log.e("ERROR", e.message!!)
+            e.printStackTrace()
+        }
+
+        Log.d("RESULT", result.success.toString())
+
+        GlobalScope.launch(Dispatchers.Main) {
+            listener?.requestPerformed(result)
+        }
+
+        return result
     }
 
     /**
@@ -319,14 +343,14 @@ class OnvifDevice(val ipAddress: String, @JvmField val username: String, @JvmFie
                 }
                 OnvifRequest.Type.GetStreamURI -> {
                     result.result?.let {
-                        val streamURI = parseStreamURIXML(it)
-                        currentDevice.rtspURI = appendCredentials(streamURI)
+                        //val streamURI = parseStreamURIXML(it)
+                        //currentDevice.rtspURI = appendCredentials(streamURI)
                         parsedResult = "RTSP URI retrieved."
                     }
                 }
                 OnvifRequest.Type.GetSnapshotURI -> {
                     result.result?.let {
-                        currentDevice.snapshotURI = parseStreamURIXML(it)
+                        //currentDevice.snapshotURI = parseStreamURIXML(it)
                         parsedResult = "JPEG URI retrieved."
                     }
                 }

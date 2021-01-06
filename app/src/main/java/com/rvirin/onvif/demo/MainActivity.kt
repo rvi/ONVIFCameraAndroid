@@ -1,16 +1,19 @@
 package com.rvirin.onvif.demo
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import com.rvirin.onvif.R
 import com.rvirin.onvif.onvifcamera.*
 import com.rvirin.onvif.onvifcamera.OnvifRequest.Type.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 const val RTSP_URL = "com.rvirin.onvif.onvifcamera.demo.RTSP_URL"
 const val JPEG_URL = "com.rvirin.onvif.onvifcamera.demo.JPEG_URL"
@@ -23,6 +26,8 @@ const val PASSWORD = "com.rvirin.onvif.onvifcamera.demo.PASSWORD"
  */
 class MainActivity : AppCompatActivity(), OnvifListener {
 
+    private var streamUri: String? = null
+    private var snapshotUri: String? = null
     private var toast: Toast? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,27 +67,30 @@ class MainActivity : AppCompatActivity(), OnvifListener {
             toast = Toast.makeText(this, "$profilesCount profiles retrieved 😎", Toast.LENGTH_SHORT)
             toast?.show()
 
-            currentDevice.getStreamURI()
+            GlobalScope.launch(Dispatchers.Default) {
+                currentDevice.getStreamURI()?.let {
+                    runOnUiThread {
+                        streamUri = it
+                        val button = findViewById<TextView>(R.id.play_button)
+                        button.isEnabled = true
 
-        }
-        // if GetStreamURI have been completed, we're ready to play the video
-        else if (response.request.type == GetStreamURI) {
+                        toast = Toast.makeText(this@MainActivity, "Stream URI retrieved,\nready for the movie 🍿", Toast.LENGTH_SHORT)
+                        toast?.show()
+                    }
+                }
 
-            val button = findViewById<TextView>(R.id.play_button)
-            button.isEnabled = true
 
-            toast = Toast.makeText(this, "Stream URI retrieved,\nready for the movie 🍿", Toast.LENGTH_SHORT)
-            toast?.show()
+                currentDevice.getSnapshotURI()?.let {
+                    runOnUiThread {
+                        snapshotUri = it
+                        val button = findViewById<TextView>(R.id.view_button)
+                        button.isEnabled = true
 
-            currentDevice.getSnapshotURI()
-        }
-        // if GetSnapshotURI has been completed, we're ready to view the snapshot
-        else if (response.request.type == GetSnapshotURI) {
-            val button = findViewById<TextView>(R.id.view_button)
-            button.isEnabled = true
-
-            toast = Toast.makeText(this, "Snapshot URI retrieved,\nready for to view.🍿", Toast.LENGTH_SHORT)
-            toast?.show()
+                        toast = Toast.makeText(this@MainActivity, "Snapshot URI retrieved,\nready for to view.🍿", Toast.LENGTH_SHORT)
+                        toast?.show()
+                    }
+                }
+            }
         }
 
     }
@@ -115,7 +123,7 @@ class MainActivity : AppCompatActivity(), OnvifListener {
     fun playClicked(view: View) {
         // If we were able to retrieve information from the camera, and if we have a rtsp uri,
         // We open StreamActivity and pass the rtsp URI
-        currentDevice.rtspURI?.let { uri ->
+        streamUri?.let { uri ->
             val intent = Intent(this, StreamActivity::class.java).apply {
                 putExtra(RTSP_URL, uri)
             }
@@ -126,7 +134,7 @@ class MainActivity : AppCompatActivity(), OnvifListener {
     }
 
     fun viewClicked(view: View) {
-        currentDevice.snapshotURI?.let { uri ->
+        snapshotUri?.let { uri ->
             val intent = Intent(this, SnapshotActivity::class.java).apply {
                 putExtra(JPEG_URL, uri)
                 putExtra(USERNAME, currentDevice.username)
