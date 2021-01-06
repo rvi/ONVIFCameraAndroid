@@ -25,7 +25,7 @@ class SnapshotActivity : AppCompatActivity() {
 
         val username = intent.getStringExtra(USERNAME)
         val password = intent.getStringExtra(PASSWORD)
-        val url = intent.getStringExtra(JPEG_URL)
+        val url = intent.getStringExtra(JPEG_URL)!!
 
         val credentials =  Credentials(username, password)
         val authenticator = DispatchingAuthenticator.Builder()
