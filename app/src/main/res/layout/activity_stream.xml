@@ -6,22 +6,13 @@
     android:layout_height="match_parent"
     tools:context="com.rvirin.onvif.demo.StreamActivity">
 
-    <SurfaceView
-        android:id="@+id/surfaceView"
+    <org.videolan.libvlc.util.VLCVideoLayout
+        android:id="@+id/video_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/b_start_stop"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/start_player"
-        app:layout_constraintBottom_toBottomOf="@id/surfaceView"
-        app:layout_constraintStart_toStartOf="@id/surfaceView"
-        app:layout_constraintEnd_toEndOf="@id/surfaceView" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
