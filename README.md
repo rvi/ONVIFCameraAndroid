@@ -6,9 +6,8 @@ Example on how to connect to an ONVIF camera on Android, and dependency to ease 
 
 Install with Gradle:
 
-```gradle
-implementation 'com.squareup.okhttp3:okhttp:3.10.0'
-implementation 'com.rvirin.onvif:onvifcamera:1.1.6'
+```groovy
+implementation 'com.rvirin.onvif:onvifcamera:1.1.9'
 ```
 
 ## Connect to an Onvif camera
@@ -32,11 +31,11 @@ class MainActivity : AppCompatActivity(), OnvifListener {
         currentDevice.getDeviceInformation()
     }
 
-// Called by the SDK each time a request is performed on the camera, when the result is parsed
-override fun requestPerformed(response: OnvifResponse) {
+    // Called by the SDK each time a request is performed on the camera, when the result is parsed
+    override fun requestPerformed(response: OnvifResponse) {
         Log.d("ONVIF", "Request ${response.request.type} performed.")
-        Log.d("ONVIF","Succeeded: ${response.success}, 
-		  message: ${response.parsingUIMessage}")
+        Log.d("ONVIF","Succeeded: ${response.success}, "
+		    + "message: ${response.parsingUIMessage}")
 
         if (response.request.type == GetDeviceInformation) {
             currentDevice.getProfiles()
@@ -48,4 +47,5 @@ override fun requestPerformed(response: OnvifResponse) {
             Log.d("ONVIF", "Stream URI retrieved: ${currentDevice.rtspURI}")
         }
     }
+}
 ```

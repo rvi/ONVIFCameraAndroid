@@ -1,51 +1,51 @@
 package com.rvirin.onvif.onvifcamera
 
-import org.xmlpull.v1.XmlPullParser
-import org.xmlpull.v1.XmlPullParserException
-import org.xmlpull.v1.XmlPullParserFactory
-import java.io.IOException
-import java.io.StringReader
+object OnvifCommands {
+    /**
+     * The header for SOAP 1.2 with digest authentication
+     */
+    private val soapHeader = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
+            "<soap:Envelope " +
+            "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
+            "xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" " +
+            "xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\" >" +
+            "<soap:Body>"
 
-fun getStreamURICommand(profile: MediaProfile): String {
+    private val envelopeEnd = "</soap:Body></soap:Envelope>"
 
-    return ("<GetStreamUri xmlns=\"http://www.onvif.org/ver20/media/wsdl\">"
-            + "<ProfileToken>" + profile.token + "</ProfileToken>"
-            + "<Protocol>RTSP</Protocol>"
-            + "</GetStreamUri>")
-}
+    val profilesCommand = (
+            soapHeader
+                    + "<GetProfiles xmlns=\"http://www.onvif.org/ver10/media/wsdl\"/>"
+                    + envelopeEnd
+            )
 
-fun parseStreamURIXML(toParse: String): String {
-    var result = ""
+    fun getStreamURICommand(profile: MediaProfile): String {
 
-    try {
-        val factory = XmlPullParserFactory.newInstance()
-        factory.isNamespaceAware = true
-        val xpp = factory.newPullParser()
-        xpp.setInput(StringReader(toParse))
-        var eventType = xpp.eventType
-        while (eventType != XmlPullParser.END_DOCUMENT) {
-
-            if (eventType == XmlPullParser.START_TAG && xpp.name == "Uri") {
-
-                xpp.next()
-                result = xpp.text
-                break
-            }
-            eventType = xpp.next()
-        }
-
-    } catch (e: XmlPullParserException) {
-        e.printStackTrace()
-    } catch (e: IOException) {
-        e.printStackTrace()
+        return (soapHeader + "<GetStreamUri xmlns=\"http://www.onvif.org/ver20/media/wsdl\">"
+                + "<ProfileToken>" + profile.token + "</ProfileToken>"
+                + "<Protocol>RTSP</Protocol>"
+                + "</GetStreamUri>" + envelopeEnd)
     }
 
-    return result
-}
+    fun getSnapshotURICommand(profile: MediaProfile): String {
 
-fun getSnapshotURICommand(profile: MediaProfile): String {
+        return (soapHeader + "<GetSnapshotUri xmlns=\"http://www.onvif.org/ver20/media/wsdl\">"
+                + "<ProfileToken>${profile.token}</ProfileToken>"
+                + "</GetSnapshotUri>" + envelopeEnd)
+    }
 
-    return ("<GetSnapshotUri xmlns=\"http://www.onvif.org/ver20/media/wsdl\">"
-            + "<ProfileToken>${profile.token}</ProfileToken>"
-            + "</GetSnapshotUri>")
+    val deviceInformationCommand = (
+            soapHeader
+                    + "<GetDeviceInformation xmlns=\"http://www.onvif.org/ver10/device/wsdl\">"
+                    + "</GetDeviceInformation>"
+                    + envelopeEnd
+            )
+
+    val servicesCommand = (
+            soapHeader
+                    + "<GetServices xmlns=\"http://www.onvif.org/ver10/device/wsdl\">"
+                    + "<IncludeCapability>false</IncludeCapability>"
+                    + "</GetServices>"
+                    + envelopeEnd
+            )
 }
