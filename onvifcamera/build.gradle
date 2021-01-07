@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
+apply plugin: 'maven-publish'
 
 android {
     compileSdkVersion 30
@@ -43,6 +44,20 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.2'
 }
 
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+
+                groupId = 'com.rvirin.onvif'
+                artifact = 'onvifcamera'
+                version = '1.1.9'
+            }
+        }
+    }
+}
+
 ext {
     bintrayRepo = 'Maven'
     bintrayName = 'ONVIFCamera'
@@ -67,8 +82,8 @@ ext {
     allLicenses = ["MIT"]
 }
 
-apply from: rootProject.file('gradle/install-v1.gradle')
-apply from: rootProject.file('gradle/bintray-android-v1.gradle')
+// apply from: rootProject.file('gradle/install-v1.gradle')
+// apply from: rootProject.file('gradle/bintray-android-v1.gradle')
 repositories {
     mavenCentral()
 }
