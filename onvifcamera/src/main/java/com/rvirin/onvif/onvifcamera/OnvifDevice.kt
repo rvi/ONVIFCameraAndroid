@@ -22,7 +22,9 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.logging.HttpLoggingInterceptor
 import java.io.IOException
+import java.io.InputStream
 import java.net.URI
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -57,58 +59,38 @@ enum class OnvifRequestType {
  */
 class OnvifDevice(
         val hostname: String,
-        @JvmField val username: String?,
-        @JvmField val password: String?,
+        val username: String?,
+        val password: String?,
         val namespaceMap: Map<String, String>,
 ) {
 
     suspend fun getDeviceInformation(): OnvifDeviceInformation {
         val path = pathForRequest(OnvifRequestType.GetDeviceInformation)
         val response = execute(hostname, path, deviceInformationCommand, username, password)
-        if (response.isSuccessful) {
-            return parseDeviceInformationResponse(response.body!!.byteStream())
-        } else {
-            throw Exception("Invalid response from device")
-        }
+        return parseDeviceInformationResponse(response)
     }
 
     suspend fun getProfiles(): List<MediaProfile> {
         val path = pathForRequest(OnvifRequestType.GetProfiles)
         val response = execute(hostname, path, profilesCommand, username, password)
-        if (response.isSuccessful) {
-            return parseProfilesResponse(response.body!!.byteStream())
-        } else {
-            throw Exception("Invalid response from device")
-        }
+        return parseProfilesResponse(response)
     }
 
-    suspend fun getStreamURI(profile: MediaProfile, addCredentials: Boolean = false): String? {
+    suspend fun getStreamURI(profile: MediaProfile, addCredentials: Boolean = false): String {
         val path = pathForRequest(OnvifRequestType.GetStreamURI)
         val response = execute(hostname, path, getStreamURICommand(profile), username, password)
-        return if (response.isSuccessful) {
-            response.body?.byteStream()?.let {
-                val uri = parseStreamURIXML(it)
-                if (addCredentials) {
-                    appendCredentials(uri)
-                } else {
-                    uri
-                }
-            }
+        val uri = parseStreamURIXML(response)
+        return if (addCredentials) {
+            appendCredentials(uri)
         } else {
-            null
+            uri
         }
     }
 
-    suspend fun getSnapshotURI(profile: MediaProfile): String? {
+    suspend fun getSnapshotURI(profile: MediaProfile): String {
         val path = pathForRequest(OnvifRequestType.GetSnapshotURI)
         val response = execute(hostname, path, getSnapshotURICommand(profile), username, password)
-        return if (response.isSuccessful) {
-            response.body?.byteStream()?.let {
-                parseStreamURIXML(it)
-            }
-        } else {
-            null
-        }
+        return parseStreamURIXML(response)
     }
 
     private fun pathForRequest(requestType: OnvifRequestType): String {
@@ -146,18 +128,9 @@ class OnvifDevice(
 
     companion object {
         suspend fun requestDevice(hostname: String, username: String?, password: String?): OnvifDevice {
-            try {
-                val result = execute(hostname, "/onvif/device_service", servicesCommand, username, password)
-                if (result.isSuccessful) {
-                    val namespaceMap = parseServicesResponse(result.body!!.byteStream())
-                    return OnvifDevice(hostname, username, password, namespaceMap)
-                } else {
-                    throw Exception("Invalid response from device")
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                throw e
-            }
+            val result = execute(hostname, "/onvif/device_service", servicesCommand, username, password)
+            val namespaceMap = parseServicesResponse(result)
+            return OnvifDevice(hostname, username, password, namespaceMap)
         }
 
         suspend fun execute(
@@ -166,7 +139,7 @@ class OnvifDevice(
                 command: String,
                 username: String?,
                 password: String?
-        ): Response {
+        ): InputStream {
             return withContext(Dispatchers.IO) {
 
                 val logging = HttpLoggingInterceptor(HttpLogger()).apply {
@@ -179,16 +152,15 @@ class OnvifDevice(
                         .build()
                 val client = OkHttpClient.Builder()
                         .authenticator(authenticator)
-//                .connectTimeout(10, TimeUnit.SECONDS)
-//                .writeTimeout(5, TimeUnit.SECONDS)
-//                .readTimeout(5, TimeUnit.SECONDS)
+                        .connectTimeout(10, TimeUnit.SECONDS)
+                        .writeTimeout(5, TimeUnit.SECONDS)
+                        .readTimeout(5, TimeUnit.SECONDS)
                         .addInterceptor(logging)
                         .build()
 
                 val reqMediaType = "application/soap+xml; charset=utf-8;".toMediaTypeOrNull()
 
                 val reqBody = command.toRequestBody(reqMediaType)
-
 
                 /* Request to ONVIF device */
                 val url = "http://$hostname$urlPath"
@@ -206,11 +178,19 @@ class OnvifDevice(
                         }
 
                         override fun onResponse(call: Call, response: Response) {
-                            // TODO use logging interceptor for this
-                            // Log.d("BODY", bodyToString(request))
-                            // Log.d("RESPONSE", response.toString())
 
-                            cont.resume(response)
+                            if (response.isSuccessful) {
+                                response.body?.byteStream()?.let { cont.resume(it) }
+                                        ?: cont.resumeWithException(OnvifInvalidResponse("Response has empty body"))
+                            } else {
+                                cont.resumeWithException(
+                                        when (response.code) {
+                                            401 -> OnvifUnauthorized("Unauthorized")
+                                            403 -> OnvifForbidden("Forbidden")
+                                            else -> OnvifInvalidResponse("Invalid response from device")
+                                        }
+                                )
+                            }
                         }
                     })
                 }
