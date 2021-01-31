@@ -32,9 +32,8 @@ bintray {
     key = properties.getProperty("bintray.apikey")
 
     pkg {
-        repo = 'Maven'
+        repo = 'maven'
         name = 'com.seanproctor.onvif.ONVIFCameraAndroid'
-        userOrg = 'scraptickets'
         configurations = ['archives']
         desc = 'An android library to interact with ONVIF cameras.'
         websiteUrl = 'https://github.com/sproctor/ONVIFCameraAndroid'
