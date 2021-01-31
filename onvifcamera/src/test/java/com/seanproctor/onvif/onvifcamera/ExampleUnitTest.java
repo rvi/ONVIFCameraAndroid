@@ -1,4 +1,4 @@
-package com.rvirin.onvif.onvifcamera;
+package com.seanproctor.onvif.onvifcamera;
 
 import org.junit.Test;
 

@@ -1,0 +1,39 @@
+apply plugin: 'com.github.dcendents.android-maven'
+
+group = 'com.seanproctor.onvif'
+
+install {
+    repositories.mavenInstaller {
+        pom {
+            project {
+                packaging 'aar'
+                groupId 'com.seanproctor.onvif'
+                artifactId 'ONVIFCameraAndroid'
+                name 'androidlibrary'
+                description 'An android library.'
+                url 'https://github.com/cuttlesoft/android-library-example'
+
+                licenses {
+                    license {
+                        name 'The MIT License'
+                        url 'https://opensource.org/licenses/MIT'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'sproctor'
+                        name 'Sean Proctor'
+                        email 'sproctor@gmail.com'
+                    }
+                }
+
+                scm {
+                    connection 'https://github.com/sproctor/ONVIFCameraAndroid.git'
+                    developerConnection 'https://github.com/sproctor/ONVIFCameraAndroid.git'
+                    url 'https://github.com/sproctor/ONVIFCameraAndroid'
+                }
+            }
+        }
+    }
+}

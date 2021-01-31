@@ -7,8 +7,8 @@ android {
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "1.2.0"
 
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
 
@@ -45,46 +45,8 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.2'
 }
 
-afterEvaluate {
-    publishing {
-        publications {
-            release(MavenPublication) {
-                from components.release
-
-                groupId = 'com.rvirin.onvif'
-                artifact = 'onvifcamera'
-                version = '1.1.9'
-            }
-        }
-    }
-}
-
-ext {
-    bintrayRepo = 'Maven'
-    bintrayName = 'ONVIFCamera'
-    orgName = 'rvi'
-
-    publishedGroupId = 'com.rvirin.onvif'
-    artifact = 'onvifcamera'
-    libraryVersion = "1.1.9"
-
-    libraryName = 'ONVIFCamera'
-    libraryDescription = 'Library to ease the connection to a ONVIF Camera'
-
-    siteUrl = 'https://github.com/rvi/ONVIFCameraAndroid'
-    gitUrl = 'https://github.com/rvi/ONVIFCameraAndroid.git'
-
-    developerId = 'rvi'
-    developerName = 'Rémy Virin'
-    developerEmail = 'remy@virin.us'
-
-    licenseName = 'The MIT License'
-    licenseUrl = 'https://opensource.org/licenses/MIT'
-    allLicenses = ["MIT"]
-}
-
-// apply from: rootProject.file('gradle/install-v1.gradle')
-// apply from: rootProject.file('gradle/bintray-android-v1.gradle')
+apply from: 'install.gradle'
+apply from: 'bintray.gradle'
 repositories {
     mavenCentral()
 }

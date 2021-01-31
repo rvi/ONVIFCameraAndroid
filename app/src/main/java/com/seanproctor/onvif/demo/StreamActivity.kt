@@ -1,9 +1,8 @@
-package com.rvirin.onvif.demo
+package com.seanproctor.onvif.demo
 
 import android.net.Uri
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.rvirin.onvif.R
 import org.videolan.libvlc.LibVLC
 import org.videolan.libvlc.Media
 import org.videolan.libvlc.MediaPlayer

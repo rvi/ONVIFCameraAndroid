@@ -1,4 +1,4 @@
-package com.rvirin.onvif.demo
+package com.seanproctor.onvif.demo
 
 import android.graphics.BitmapFactory
 import android.os.Bundle
@@ -10,7 +10,6 @@ import com.burgstaller.okhttp.DispatchingAuthenticator
 import com.burgstaller.okhttp.basic.BasicAuthenticator
 import com.burgstaller.okhttp.digest.Credentials
 import com.burgstaller.okhttp.digest.DigestAuthenticator
-import com.rvirin.onvif.R
 import okhttp3.*
 import java.io.IOException
 import java.util.concurrent.TimeUnit

@@ -1,4 +1,4 @@
-package com.rvirin.onvif.demo
+package com.seanproctor.onvif.demo
 
 import android.content.Intent
 import android.os.Bundle
@@ -8,14 +8,13 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.rvirin.onvif.R
-import com.rvirin.onvif.onvifcamera.*
+import com.seanproctor.onvif.onvifcamera.OnvifDevice
 import kotlinx.coroutines.launch
 
-const val RTSP_URL = "com.rvirin.onvif.onvifcamera.demo.RTSP_URL"
-const val JPEG_URL = "com.rvirin.onvif.onvifcamera.demo.JPEG_URL"
-const val USERNAME = "com.rvirin.onvif.onvifcamera.demo.USERNAME"
-const val PASSWORD = "com.rvirin.onvif.onvifcamera.demo.PASSWORD"
+const val RTSP_URL = "RTSP_URL"
+const val JPEG_URL = "JPEG_URL"
+const val USERNAME = "USERNAME"
+const val PASSWORD = "PASSWORD"
 
 /**
  * Main activity of this demo project. It allows the user to type his camera IP address,
@@ -54,7 +53,7 @@ class MainActivity : AppCompatActivity() {
                 val profiles = device.getProfiles()
                 
                 profiles.firstOrNull { it.canStream() }?.let {
-                    device.getStreamURI(it, addCredentials = true)?.let { uri ->
+                    device.getStreamURI(it, addCredentials = true).let { uri ->
                         runOnUiThread {
                             streamUri = uri
                             val button = findViewById<TextView>(R.id.play_button)
@@ -64,7 +63,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 
                 profiles.firstOrNull { it.canSnapshot() }?.let { 
-                    device.getSnapshotURI(it)?.let { uri ->
+                    device.getSnapshotURI(it).let { uri ->
                         runOnUiThread {
                             snapshotUri = uri
                             val button = findViewById<TextView>(R.id.view_button)

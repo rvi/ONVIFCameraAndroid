@@ -1,0 +1,46 @@
+apply plugin: 'com.jfrog.bintray'
+
+version = '1.2.0'
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+task javadoc(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    excludes = ['**/*.kt']
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}
+
+Properties properties = new Properties()
+properties.load( new FileInputStream("local.properties"))
+
+// Bintray
+bintray {
+    user = properties.getProperty("bintray.user")
+    key = properties.getProperty("bintray.apikey")
+
+    pkg {
+        repo = 'Maven'
+        name = 'com.seanproctor.onvif.ONVIFCameraAndroid'
+        userOrg = 'scraptickets'
+        configurations = ['archives']
+        desc = 'An android library to interact with ONVIF cameras.'
+        websiteUrl = 'https://github.com/sproctor/ONVIFCameraAndroid'
+        vcsUrl = 'https://github.com/sproctor/ONVIFCameraAndroid.git'
+        licenses = ["MIT"]
+        publish = true
+        publicDownloadNumbers = true
+    }
+}
